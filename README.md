@@ -134,8 +134,48 @@
                 // com.atguigu.spring5.Orders@130c12b7
                 // Computer made in China
                 ```
-    - 
-    
+    - 注入其他类型的属性
+        - 一个attribute为null
+            ```xml
+            <property name="address"> <null/> </property>
+            ```
+        - 属性值包含特殊符号
+            ```xml
+            <!--属性值包含特殊符号 
+                1 把<>进行转义 &lt; &gt; 
+                2 把带特殊符号内容写到CDATA 
+            --> 
+            <property name="address"> <value><![CDATA[<<南京>>]]></value> </property>
+            ```
+        - 一个attribute的type为Object
+            - 外部bean
+                ```xml
+                <bean id="emp" class="com.atguigu.spring5.bean.Emp"> 
+                    <!--设置两个普通属性--> 
+                    <property name="ename" value="lucy"></property> 
+                    <property name="gender" value="女"></property> 
+                    <!--设置对象类型属性--> 
+                    <property name="dept" ref="dept"> </property> 
+                </bean>
+                
+                <bean id="dept" class="com.atguigu.spring5.bean.Dept"> 
+                    <property name="dname" value="安保部"></property> 
+                </bean> 
+                ```
+            - 内部bean
+                ```xml
+                <bean id="emp" class="com.atguigu.spring5.bean.Emp"> 
+                    <!--设置两个普通属性--> 
+                    <property name="ename" value="lucy"></property> 
+                    <property name="gender" value="女"></property> 
+                    <!--设置对象类型属性--> 
+                    <property name="dept"> 
+                        <bean id="dept" class="com.atguigu.spring5.bean.Dept"> 
+                            <property name="dname" value="安保部"></property> 
+                        </bean> 
+                    </property> 
+                </bean>
+                ```
 ## spring mvc
 
 ## spring boot
