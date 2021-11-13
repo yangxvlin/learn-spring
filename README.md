@@ -55,85 +55,86 @@
         - 2b) set注入: constructor没有参数有setter(), xml的<bean>tag里面```<property name="attributeName" value="myValue">``` 好处: 灵活简便
         - setter注入
             - (1)创建类，定义attributes和对应的setters
-            ```java
-            public class Book {
-                //attributes
-                private String name;
-                private String author;
+                ```java
+                public class Book {
+                    //attributes
+                    private String name;
+                    private String author;
 
-                //setters
-                public void setAuthor(String author) {
-                    this.author = author;
-                }
-                public void setName(String name) {
-                    this.name = name;
-                }
+                    //setters
+                    public void setAuthor(String author) {
+                        this.author = author;
+                    }
+                    public void setName(String name) {
+                        this.name = name;
+                    }
 
-                public void testBook() {
-                    System.out.println("<<"+name+">> by "+author);
+                    public void testBook() {
+                        System.out.println("<<"+name+">> by "+author);
+                    }
                 }
-            }
-            ```
+                ```
             - (2) set方法注入属性
-            ```xml
-            <bean id="book1" class="com.atguigu.spring5.Book">
-                <!-- 使用property完成属性注入
-                        name：类里面attribute的名称
-                        value：向属性注入的值
-                -->
-                <property name="author" value="Craig Walls"></property>
-                <property name="name" value="Spring in action"></property>
-            </bean>
-            ```
+                ```xml
+                <bean id="book1" class="com.atguigu.spring5.Book">
+                    <!-- 使用property完成属性注入
+                            name：类里面attribute的名称
+                            value：向属性注入的值
+                    -->
+                    <property name="author" value="Craig Walls"></property>
+                    <property name="name" value="Spring in action"></property>
+                </bean>
+                ```
             - (3) 使用
-            ```java
-            @Test
-            public void testBook() {
-                ApplicationContext cpx = new ClassPathXmlApplicationContext("bean1.xml");
-                Book book1 = cpx.getBean("book1", Book.class);
-                System.out.println(book1);
-                book1.testBook();
-            }
-            // com.atguigu.spring5.Book@55634720
-            // <<Spring in action>> by Craig Walls
-            ```
+                ```java
+                @Test
+                public void testBook() {
+                    ApplicationContext cpx = new ClassPathXmlApplicationContext("bean1.xml");
+                    Book book1 = cpx.getBean("book1", Book.class);
+                    System.out.println(book1);
+                    book1.testBook();
+                }
+                // com.atguigu.spring5.Book@55634720
+                // <<Spring in action>> by Craig Walls
+                ```
         - constructor注入
             - (1)创建类，定义attributes和对应的有参数的constructor
-            ```java
-            public class Orders {
-                // attributes
-                private String name;
-                private String address;
-                // constructor with arguments for attributes
-                public Orders(String name, String address) {
-                    this.name    = name;
-                    this.address = address;
-                }
+                ```java
+                public class Orders {
+                    // attributes
+                    private String name;
+                    private String address;
+                    // constructor with arguments for attributes
+                    public Orders(String name, String address) {
+                        this.name    = name;
+                        this.address = address;
+                    }
 
-                public void testOrder() {
-                    System.out.println(name+" made in "+address);
+                    public void testOrder() {
+                        System.out.println(name+" made in "+address);
+                    }
                 }
-            }
-            ```
+                ```
             - (2) constructor注入属性
-            ```xml
-            <bean id="order1" class="com.atguigu.spring5.Orders">
-                <constructor-arg name="name" value="Computer"></constructor-arg>
-                <constructor-arg name="address" value="China"></constructor-arg>
-            </bean>
-            ```
+                ```xml
+                <bean id="order1" class="com.atguigu.spring5.Orders">
+                    <constructor-arg name="name" value="Computer"></constructor-arg>
+                    <constructor-arg name="address" value="China"></constructor-arg>
+                </bean>
+                ```
             - (3) 使用
-            ```java
-            @Test
-            public void testOrder() {
-                ApplicationContext cpx = new ClassPathXmlApplicationContext("bean1.xml");
-                Orders order1 = cpx.getBean("order1", Orders.class);
-                System.out.println(order1);
-                order1.testOrder();
-            }
-            // com.atguigu.spring5.Orders@130c12b7
-            // Computer made in China
-            ```
+                ```java
+                @Test
+                public void testOrder() {
+                    ApplicationContext cpx = new ClassPathXmlApplicationContext("bean1.xml");
+                    Orders order1 = cpx.getBean("order1", Orders.class);
+                    System.out.println(order1);
+                    order1.testOrder();
+                }
+                // com.atguigu.spring5.Orders@130c12b7
+                // Computer made in China
+                ```
+    - 
     
 ## spring mvc
 
