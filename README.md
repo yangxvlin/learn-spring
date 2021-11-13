@@ -157,7 +157,7 @@
                     <!--设置对象类型属性--> 
                     <property name="dept" ref="dept"> </property> 
                 </bean>
-                
+
                 <bean id="dept" class="com.atguigu.spring5.bean.Dept"> 
                     <property name="dname" value="安保部"></property> 
                 </bean> 
@@ -176,6 +176,118 @@
                     </property> 
                 </bean>
                 ```
+        - 一个attribute的type为```Array, List, Map, Set```
+            - 1\) java类
+                ```java
+                public class Stu {
+                    // 1 数组类型属性
+                    private String[] courses;
+                    // 2 list集合类型属性
+                    private List<String> list;
+                    // 3 map集合类型属性
+                    private Map<String,String> maps;
+                    // 4 set集合类型属性
+                    private Set<String> sets;
+                    // 5 collection of Java Object属性
+                    private List<Course> courseList;
+
+                    public void setCourses(String[] courses) { this.courses = courses; }
+                    public void setList(List<String> list) { this.list = list; }
+                    public void setMaps(Map<String, String> maps) { this.maps = maps; }
+                    public void setSets(Set<String> sets) { this.sets = sets; }
+                    public void setCourseList(List<Course> courseList) { this.courseList = courseList; }
+
+                    @Override
+                    public String toString() {
+                        return "Stu{" +
+                                "courses=" + Arrays.toString(courses) +
+                                ", list=" + Arrays.toString(list.toArray()) +
+                                ", maps=" + Arrays.toString(maps.entrySet().toArray()) +
+                                ", sets=" + Arrays.toString(sets.toArray()) +
+                                ", courseList=" + Arrays.toString(courseList.toArray()) +
+                                '}';
+                    }
+                }
+                public class Course {
+                    private String name;
+                    private double points;
+
+                    public void setName(String name) { this.name = name; }
+                    public void setPoints(double points) { this.points = points; }
+
+                    @Override
+                    public String toString() {
+                        return "Course{" +
+                                "name='" + name + '\'' +
+                                ", points=" + points +
+                                '}';
+                    }
+                }
+                ```
+            - 2\) xml配置
+                ```xml
+                <bean id="student1" class="com.atguigu.spring5.Stu">
+                    <!--1. Array属性注入-->
+                    <property name="courses">
+                        <array>
+                            <value>Java Course</value>
+                            <value>Database Course</value>
+                        </array>
+                    </property>
+                    <!--2. List属性注入-->
+                    <property name="list">
+                        <list>
+                            <value>value1</value>
+                            <value>value2</value>
+                        </list>
+                    </property>
+
+                    <!--3. Map属性注入-->
+                    <property name="maps">
+                        <map>
+                            <entry key="key1" value="val1" />
+                            <entry key="key2" value="val2" />
+                        </map>
+                    </property>
+
+                    <!--4. Set属性注入-->
+                    <property name="sets">
+                        <set>
+                            <value>Java</value>
+                            <value>Redis</value>
+                            <value>Spring</value>
+                        </set>
+                    </property>
+
+                    <!--5. collection of Java Object属性注入-->
+                    <property name="courseList">
+                        <list>
+                            <ref bean="course1"></ref>
+                            <ref bean="course2"></ref>
+                        </list>
+                    </property>
+                </bean>
+                <!--5. 创建多个course对象-->
+                <bean id="course1" class="com.atguigu.spring5.Course">
+                    <property name="name" value="Spring5框架"></property>
+                    <property name="points" value="12.5"></property>
+                </bean>
+                <bean id="course2" class="com.atguigu.spring5.Course">
+                    <property name="name" value="MyBatis框架"></property>
+                    <property name="points" value="12.5"></property>
+                </bean>
+                ```
+            - 3\) 使用
+                ```java
+                @Test
+                public void testStu() {
+                    ApplicationContext cpx = new ClassPathXmlApplicationContext("bean1.xml");
+                    Stu stu = cpx.getBean("student1", Stu.class);
+                    System.out.println(stu);
+                }
+                //Stu{courses=[Java Course, Database Course], list=[value1, value2], maps=[key1=val1, key2=val2], sets=[Java, Redis, Spring], courseList=[Course{name='Spring5框架', points=12.5}, Course{name='MyBatis框架', points=12.5}]}
+                ```
+
 ## spring mvc
 
 ## spring boot
