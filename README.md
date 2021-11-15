@@ -287,7 +287,15 @@
                 }
                 //Stu{courses=[Java Course, Database Course], list=[value1, value2], maps=[key1=val1, key2=val2], sets=[Java, Redis, Spring], courseList=[Course{name='Spring5框架', points=12.5}, Course{name='MyBatis框架', points=12.5}]}
                 ```
-
+- > 解释Spring支持的几种bean的作用域
+    - 1a) <Bean ... scope="singleton" /> 默认, 每次ApplicationContext.getBean(id)的都是同一个对象(i.e., hashCode()一样)
+    - 1b) <Bean ... scope="prototype" /> 每次ApplicationContext.getBean(id)的都是不同的对象(i.e., hashCode()不一样)
+    - 1c) request (request结束自动销毁), session(用户会话结束自动销毁), application (全局存在的)
+- FactoryBean TODO 看不懂
+    - https://juejin.cn/post/6844903954615107597
+    - https://blog.csdn.net/weixin_42195284/article/details/109339203
+    - https://www.bilibili.com/video/BV1Vf4y127N5?p=15
+    
 ## spring mvc
 
 ## spring boot
