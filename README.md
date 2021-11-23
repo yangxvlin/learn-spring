@@ -295,7 +295,70 @@
     - https://juejin.cn/post/6844903954615107597
     - https://blog.csdn.net/weixin_42195284/article/details/109339203
     - https://www.bilibili.com/video/BV1Vf4y127N5?p=15
-    
+- Bean的生命周期
+    1. 通过无参constructor instantiate bean
+    2. setter注入
+    3. 把bean instance传递到```postProcessBeforeInitialization()```方法
+    4. 调用bean的```initMethod()```(initMethod需要被配置)
+    5. 把bean instance传递到```postProcessAfterInitialization()```方法
+    6. ApplicationContext.getBean(id)
+    7. 当容器关闭时候(```ApplicationContext.close()```)，调用bean的```destroyMethod()```(destroyMethod需要被配置)
+    - xml配置
+        ```xml
+        <bean id="order2" class="com.atguigu.spring5.BeanLifecycle.Order" init-method="initMethod" destroy-method="destroyMethod">
+            <property name="name" value="Order: sim card"></property>
+        </bean>
+        <!-- 注意：当前bean.xml里所有的bean都会被配置这个 -->
+        <bean id="myBeanPostProcessor" class="com.atguigu.spring5.BeanLifecycle.MyBeanPostProcessor"></bean>
+        ```
+    - Java 对象
+        ```java
+        public class Order {
+            public String name;
+            public void setName(String name) {
+                this.name = name;
+                System.out.println("2. setter注入");
+            }
+
+            public Order() {
+                System.out.println("1. 通过无参constructor instantiate bean");
+            }
+
+            public void initMethod() {
+                System.out.println("4. 调用bean的initMethod()(initMethod需要被配置)");
+            }
+            public void destroyMethod() {
+                System.out.println("7. 当容器关闭时候(ApplicationContext.close())，调用bean的destroyMethod()(destroyMethod需要被配置)");
+            }
+        }
+        ```
+    - postProcessor
+        ```java
+        public class MyBeanPostProcessor implements BeanPostProcessor {
+            @Override
+            public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+                System.out.println("3. 把bean instance传递到postProcessBeforeInitialization()方法");
+                return bean;
+            }
+
+            @Override
+            public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+                System.out.println("5. 把bean instance传递到postProcessAfterInitialization()方法");
+                return bean;
+            }
+        }
+        ```
+    - 使用
+        ```java
+        @Test
+        public void testBeanLifecycle() {
+            ClassPathXmlApplicationContext cpx = new ClassPathXmlApplicationContext("bean2.xml");
+            Order order = cpx.getBean("order2", Order.class);
+            System.out.println("6. ApplicationContext.getBean(id)");
+            System.out.println(order);
+            cpx.close();
+        }
+        ```
 ## spring mvc
 
 ## spring boot
