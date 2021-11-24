@@ -359,6 +359,18 @@
             cpx.close();
         }
         ```
+- bean的自动装配
+    - > 什么是bean的自动装配？
+        - 自动装配是满足Bean的依赖关系的一种方式
+    - > 解释不同方式的自动装配? 
+        - |语法|含义|注意|
+          |---|---|---|
+          |```<bean ... autowire="byName" />```|自动在容器上下文中查找, 装配和setter参数名一样的bean id。|要保证所有的bean id唯一
+          |```<bean ... autowire="byType" />```|自动在容器上下文中查找, 装配和arrirbute类型一样的bean。|要保证所有的bean的class唯一
+          |使用注解自动装配
+    - > 自动装配有哪些局限性?
+        1. 不能自动装配简单的属性，例如primitive
+        2. 自动装配不如显式装配精确
 ## spring mvc
 
 ## spring boot
