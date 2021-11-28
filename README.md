@@ -470,7 +470,81 @@
     |@Controller|作用于表现层（spring-mvc的注解
     [reference](https://www.cnblogs.com/jsoso/p/11243559.html)
 ### spring AOP
+- 什么是AOP?
+    - 面向切面编程，利用AOP可以对业务逻辑的各个部分进行隔离，从而使得业务逻辑各部分之间的耦合度降低，提高程序的可重用性，同时提高了开发的效率。
+    - 通俗描述：不通过修改源代码方式，在主干功能里面添加新功能
+- AOP 底层原理?
+    - 有Interface情况，使用JDK动态代理
+    - 没有Interface情况，使用CGLIB动态代理
+- JDK 动态代理?
+    - Proxy.newProxyInstance
+        ```java
+        /**
+         * Returns a proxy instance for the specified interfaces that dispatches method invocations to the specified invocation handler.
+         * @params loader     - the class loader to define the proxy class
+         * @params interfaces - the list of interfaces for the proxy class to implement
+         * @params h          - the invocation handler to dispatch method invocations to
+         */
+        public static Object newProxyInstance​(ClassLoader loader, Class<?>[] interfaces, InvocationHandler h)
+        ```
+        [reference](https://docs.oracle.com/en/java/javase/15/docs/api/java.base/java/lang/reflect/Proxy.html#newProxyInstance(java.lang.ClassLoader,java.lang.Class%5B%5D,java.lang.reflect.InvocationHandler))
+    - 编写JDK动态代理代码
+        1. 创建Interface里面包含被代理的methods
+            ```java
+            public interface UserDao {
+                public int add(int a,int b);
+                public String update(String id);
+            }
+            ```
+        2. 创建class来实现interface来被代理
+            ```java
+            public class UserDaoImpl implements UserDao {
+                @Override
+                public int add(int a, int b) {
+                    return a+b;
+                }
 
+                @Override
+                public String update(String id) {
+                    return id;
+                }
+            }
+            ```
+        3. 使用InvocationHandler来代理
+            ```java
+            class UserDaoInvocationHandler implements InvocationHandler {
+                // 1 把创建的是谁的代理对象，把谁传递过来
+                // 有参数构造传递
+                private Object obj;
+                public UserDaoInvocationHandler(Object obj) {
+                    this.obj = obj;
+                }
+
+                @Override
+                public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                    //方法之前
+                    System.out.println("方法之前执行.... "+method.getName()+": 传递的参数:"+ Arrays.toString(args));
+                    //被增强的方法执行
+                    Object res = method.invoke(obj, args);
+                    //方法之后
+                    System.out.println("方法之后执行...."+obj);
+                    return res;
+                }
+            }
+            ```
+        4. 使用
+            ```java
+            public class JDKProxy {
+                public static void main(String[] args) {
+                    //创建接口实现类代理对象
+                    Class[] interfaces = { UserDao.class };
+                    UserDaoImpl userDao = new UserDaoImpl();
+                    UserDao dao = (UserDao) Proxy.newProxyInstance(UserDaoImpl.class.getClassLoader(), interfaces, new UserDaoInvocationHandler(userDao));
+                    int result = dao.add(1, 2);
+                    System.out.println("result: "+result);
+                }
+            }
+            ```
 ## spring mvc
 
 ## spring boot
