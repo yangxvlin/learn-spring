@@ -10,6 +10,7 @@
 4. [尚硅谷SpringCloud框架开发教程(SpringCloudAlibaba微服务分布式架构丨Spring Cloud)](https://www.bilibili.com/video/BV18E411x7eT)
 
 ## spring
+### spring IOC
 - > 你对IoC的理解？为什么需要IoC/优点？
     - 1\) IOC=Inversion of Control=一种通过XML/注解的方式让spring获得object相关的配置信息并将object创建在Spring IOC容器中来管理object之间的关系以及生命周期。也就是说对象的控制权由应用代码转移到了外部容器。不同的客户端能通过ApplicationContext.getBean(id)获取到对应的object。其实现方法是依赖注入(DI, Dependency Injection)
     - 2a) 资源不由使用资源的双方管理而由不使用资源的第三方管理从而降低了使用资源的双方的耦合度。
@@ -371,6 +372,105 @@
     - > 自动装配有哪些局限性?
         1. 不能自动装配简单的属性，例如primitive
         2. 自动装配不如显式装配精确
+- bean的注解装配
+    - 1\) import spring-aop.jar
+    - 2\) config
+        - xml: bean3.xml
+          ```xml
+          <beans ...
+                 xmlns:context="http://www.springframework.org/schema/context"
+                 xsi:schemaLocation="...
+                                    http://www.springframework.org/schema/context 
+                                    http://www.springframework.org/schema/context/spring-context.xsd"
+          >
+              <context:component-scan base-package="com.atguigu.spring5.annotationBeanDemo">
+              </context:component-scan>
+            </beans>
+          ```
+        - annotation: config/SpringConfig.java
+          ```java
+          @Configuration
+          @ComponentScan(basePackages = {"com.atguigu.spring5"})
+          public class SpringConfig {
+          }
+          ```
+    - 3\) java class
+        - UserService
+            ```java
+            @Component(value = "userService")
+            public class UserService {
+                @Autowired
+                @Qualifier(value = "userDao")
+                private UserDAO userDAO;
+
+                public void add() {
+                    System.out.println("UserService add() .........");
+                    userDAO.add();
+                }
+
+                @Override
+                public String toString() {
+                    return "UserService{" +
+                            "userDAO=" + userDAO +
+                            '}';
+                }
+            }
+            ```
+        - UserDAO
+            ```java
+            @Component(value = "userDao")
+            public class UserDAO {
+                @Value(value = "Peter")
+                private String name;
+
+                public void add() {
+                    System.out.println("UserDAO add() ......... ");
+                }
+
+                @Override
+                public String toString() {
+                    return "UserDAO{" +
+                            "name='" + name + '\'' +
+                            '}';
+                }
+            }
+            ```
+    - 4\) 使用
+        - xml
+            ```java
+            @Test
+            public void testAnnotationBeanDemoXML() {
+                ClassPathXmlApplicationContext cpx = new ClassPathXmlApplicationContext("bean3.xml");
+                UserService userService = cpx.getBean("userService", UserService.class);
+                System.out.println(userService);
+                userService.add();
+            }
+            ```
+        - annotation
+            ```java
+            @Test
+            public void testAnnotationBeanDemo() {
+                ApplicationContext acac = new AnnotationConfigApplicationContext(SpringConfig.class);
+                UserService userService = acac.getBean("userService", UserService.class);
+                System.out.println(userService);
+                userService.add();
+            }
+            ```
+- > 谈谈@Required, @Autowired, @Qualifier, @Resource注解。
+    - 2a) @Required: 表明bean的属性必须在配置的时候设置。若@Required注解的attribute未被设置，容器将抛出BeanInitializationException。
+    - 2b) @Autowired: byType给attribute匹配bean
+    - 2c) @Qualifier(value="bean id"): 与@Autowired搭配使用, 当@Autowired的class对应多个bean id的时候按照我们指定的匹配。
+    - 2d) @Resource(可以value="bean id"): 先是byName给attribute匹配bean, 一个bead id有多个class的话再byName, 不然报错
+- @Component, @Repository, @Service, @Controller的区别
+    |annotation|meaning|
+    |---|---|
+    |@Component|最普通的组件，可以被注入到spring容器进行管理
+    |@Repository|作用于持久层
+    |@Service|作用于业务逻辑层
+    |@Controller|作用于表现层（spring-mvc的注解
+    [reference](https://www.cnblogs.com/jsoso/p/11243559.html)
+### spring AOP
+
 ## spring mvc
 
 ## spring boot
