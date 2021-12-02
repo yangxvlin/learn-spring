@@ -562,6 +562,132 @@
             - 对com.atguigu.dao.BookDao类里面的所有的方法进行增强
         - ```execution(* com.atguigu.dao.*.* (..))```
             - 对com.atguigu.dao包里面所有类，类里面所有方法进行增强
+- Aop 代码
+    1. dependency
+        ```
+        commons-logging-1.1.1.jar
+        com.springsource.net.sf.cglib-2.2.0.jar
+        com.springsource.org.aopalliance-1.0.0.jar
+        com.springsource.org.aspectj.weaver-1.6.8.RELEASE.jar
+        spring-framework-5.2.9.RELEASE/libs/spring-aop-5.2.9.RELEASE.jar
+        spring-framework-5.2.9.RELEASE/libs/spring-aspects-5.2.9.RELEASE.jar
+        spring-framework-5.2.9.RELEASE/libs/spring-beans-5.2.9.RELEASE.jar
+        spring-framework-5.2.9.RELEASE/libs/spring-context-5.2.9.RELEASE.jar
+        spring-framework-5.2.9.RELEASE/libs/spring-core-5.2.9.RELEASE.jar
+        spring-framework-5.2.9.RELEASE/libs/spring-expression-5.2.9.RELEASE.jar
+        ```
+    2. 创建普通的类并在类里面定义方法
+        ```java
+        @Component(value = "user")
+        public class User {
+            public void add() {
+                System.out.println("add.......");
+            }
+        }
+        ```
+    3. 创建增强类(编写增强逻辑): 在增强类里面，创建方法，让不同方法代表不同通知类型
+        ```java
+        @Component
+        @Aspect
+        public class UserAdvice {
+            // 相同切入点抽取
+            @Pointcut(value = "execution(* com.atguigu.spring5.aop_annotation.User.add(..))")
+            public void pointdemo() {  }
+
+            //前置通知
+            @Before(value = "pointdemo()")
+            public void before() {
+                System.out.println("before......");
+            }
+            //返回通知
+            @AfterReturning(value = "execution(* com.atguigu.spring5.aop_annotation.User.add(..))")
+            public void afterReturning() {
+                System.out.println("afterReturning.........");
+            }
+            //后置通知
+            @After(value = "execution(* com.atguigu.spring5.aop_annotation.User.add(..))")
+            public void after() {
+                System.out.println("after.........");
+            }
+            //异常通知
+            @AfterThrowing(value = "execution(* com.atguigu.spring5.aop_annotation.User.add(..))")
+            public void afterThrowing() {
+                System.out.println("afterThrowing.........");
+            }
+            //环绕通知
+            @Around(value = "execution(* com.atguigu.spring5.aop_annotation.User.add(..))")
+            public void around(ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
+                System.out.println("环绕之前.........");
+                //被增强的方法执行
+                proceedingJoinPoint.proceed();
+                System.out.println("环绕之后.........");
+            }
+        }
+        ```
+    4. 配置
+        - 使用注解开发 不需要xml
+            ```java
+            @Configuration
+            @ComponentScan(basePackages = {"com.atguigu.spring5.aop_annotation"}) // 开启annotation 扫描
+            @EnableAspectJAutoProxy(proxyTargetClass = true) // 开启Aspect生成代理对象
+            public class AopConfig {
+            }
+            ```
+        - 使用xml
+            ```xml
+            <beans ...
+                   xmlns:aop="http://www.springframework.org/schema/aop"
+                   xsi:schemaLocation="...
+                                    http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+                <!--创建对象-->
+                <bean id="user" class="com.atguigu.spring5.aop_annotation.User"></bean>
+                <bean id="userAdvice" class="com.atguigu.spring5.aop_annotation.UserAdvice"></bean>
+
+                <!--配置aop增强-->
+                <aop:config>
+                    <!--切入点-->
+                    <aop:pointcut id="p" expression="execution(* com.atguigu.spring5.aop_annotation.User.add(..))"/>
+                    <!--配置切面-->
+                    <aop:aspect ref="userAdvice">
+                        <!--增强作用在具体的方法上-->
+                        <aop:before method="before" pointcut-ref="p"/>
+                    </aop:aspect>
+                </aop:config>
+            </beans>
+            ```
+    5. 运行
+        - 结果
+            ```
+            com.atguigu.spring5.aop_annotation.User@63a270c9
+            环绕之前.........
+            before......
+            add.......
+            afterReturning.........
+            after.........
+            环绕之后.........
+
+            Process finished with exit code 0
+            ```
+        - 注解
+            ```java
+            @Test
+            public void testAnnotationAop() {
+                ApplicationContext acac = new AnnotationConfigApplicationContext(AopConfig.class);
+                User user = acac.getBean("user", User.class);
+                System.out.println(user);
+                user.add();
+            }
+            ```
+        - xml
+            ```java
+            @Test
+            public void testXMLAop() {
+                ClassPathXmlApplicationContext cpx = new ClassPathXmlApplicationContext("bean4.xml");
+                User user = cpx.getBean("user", User.class);
+                System.out.println(user);
+                user.add();
+            }
+            ```
 ## spring mvc
 
 ## spring boot
