@@ -545,6 +545,23 @@
                 }
             }
             ```
+- Aop 名词
+    |名词||含义|
+    |---|---|---|
+    |JoinPoint|连接点|class里面能被增强的method
+    |PointCut|切入点|class里面实际被增强的method
+    |Advice|通知(增强)|实际被增强的逻辑部分<br/>通知有多个类型:<br/>1. 前置通知（Before）<br/>2. 后置通知（After）<br/>3. 返回通知（After-returning）<br/>4. 异常通知（After-throwing）<br/>5. 环绕通知（Around）
+    |Aspect|切面|把通知应用到切入点的过程
+- PointCut 切入点表达式
+    - 作用：知道对哪个类里面的哪个方法进行增强
+    - 语法结构： ```execution([权限修饰符 optional] [返回类型] [类全路径].[方法名称]([参数1的类型], [参数2的类型], ...) )```
+        - ```execution(void com.huge.service.impl.AccountServiceImpl.save())```
+        - ```execution(* com.atguigu.dao.BookDao.add(..))```
+            - 对com.atguigu.dao.BookDao类里面的add进行增强
+        - ```execution(* com.atguigu.dao.BookDao.* (..))```
+            - 对com.atguigu.dao.BookDao类里面的所有的方法进行增强
+        - ```execution(* com.atguigu.dao.*.* (..))```
+            - 对com.atguigu.dao包里面所有类，类里面所有方法进行增强
 ## spring mvc
 
 ## spring boot
