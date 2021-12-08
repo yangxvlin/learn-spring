@@ -9,6 +9,22 @@
         - [spring IOC](#spring-ioc)
         - [spring AOP](#spring-aop)
         - [spring jdbc](#spring-jdbc)
+            - [0 配置数据库连接](#0-%E9%85%8D%E7%BD%AE%E6%95%B0%E6%8D%AE%E5%BA%93%E8%BF%9E%E6%8E%A5)
+            - [1 表示database数据的class](#1-%E8%A1%A8%E7%A4%BAdatabase%E6%95%B0%E6%8D%AE%E7%9A%84class)
+            - [2 Dao 增删改查](#2-dao-%E5%A2%9E%E5%88%A0%E6%94%B9%E6%9F%A5)
+                - [2a 赠](#2a-%E8%B5%A0)
+                    - [一次添加单个mysql记录: jdbcTemplate.update](#%E4%B8%80%E6%AC%A1%E6%B7%BB%E5%8A%A0%E5%8D%95%E4%B8%AAmysql%E8%AE%B0%E5%BD%95-jdbctemplateupdate)
+                    - [一次添加多个mysql记录: jdbcTemplate.batchUpdate](#%E4%B8%80%E6%AC%A1%E6%B7%BB%E5%8A%A0%E5%A4%9A%E4%B8%AAmysql%E8%AE%B0%E5%BD%95-jdbctemplatebatchupdate)
+                - [2b 改](#2b-%E6%94%B9)
+                    - [一次修改单个mysql记录: jdbcTemplate.update](#%E4%B8%80%E6%AC%A1%E4%BF%AE%E6%94%B9%E5%8D%95%E4%B8%AAmysql%E8%AE%B0%E5%BD%95-jdbctemplateupdate)
+                - [2c 删](#2c-%E5%88%A0)
+                    - [一次删除单个mysql记录: jdbcTemplate.update](#%E4%B8%80%E6%AC%A1%E5%88%A0%E9%99%A4%E5%8D%95%E4%B8%AAmysql%E8%AE%B0%E5%BD%95-jdbctemplateupdate)
+                - [2d 查](#2d-%E6%9F%A5)
+                    - [query并返回primitive: jdbcTemplate.queryForObject](#query%E5%B9%B6%E8%BF%94%E5%9B%9Eprimitive-jdbctemplatequeryforobject)
+                    - [query并返回对象: jdbcTemplate.queryForObject](#query%E5%B9%B6%E8%BF%94%E5%9B%9E%E5%AF%B9%E8%B1%A1-jdbctemplatequeryforobject)
+                    - [query并返回collection: jdbcTemplate.query](#query%E5%B9%B6%E8%BF%94%E5%9B%9Ecollection-jdbctemplatequery)
+            - [3 Service使用Dao](#3-service%E4%BD%BF%E7%94%A8dao)
+            - [4 使用](#4-%E4%BD%BF%E7%94%A8)
     - [spring mvc](#spring-mvc)
     - [spring boot](#spring-boot)
     - [spring cloud](#spring-cloud)
@@ -703,6 +719,247 @@
             }
             ```
 ### spring jdbc
+- 什么是JdbcTemplate?
+    - Spring框架对JDBC进行封装，使用JdbcTemplate方便实现对数据库操作
+#### (0) 配置数据库连接
+- dependency
+    ```
+    druid-1.2.8.jar
+    mysql-connector-java-5.1.47.jar
+    spring-framework-5.2.9.RELEASE/libs/spring-jdbc-5.2.9.RELEASE.jar
+    spring-framework-5.2.9.RELEASE/libs/spring-orm-5.2.9.RELEASE.jar
+    spring-framework-5.2.9.RELEASE/libs/spring-tx-5.2.9.RELEASE.jar
+    ```
+- 配置
+    ```xml
+    <beans xmlns="http://www.springframework.org/schema/beans"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:context="http://www.springframework.org/schema/context"
+        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                            http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+        <!-- 数据库连接池 -->
+        <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" destroy-method="close">
+            <!-- jdbc:mysql://localhost:3306/<<database SCHEMAS>> -->
+            <property name="url" value="jdbc:mysql://localhost:3306/test" /> 
+            <property name="username" value="root" />
+            <property name="password" value="<<MySQL password>>" />
+            <property name="driverClassName" value="com.mysql.jdbc.Driver" />
+        </bean>
+        <!-- JdbcTemplate对象 -->
+        <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+            <!--注入dataSource-->
+            <property name="dataSource" ref="dataSource"></property>
+        </bean>
+
+        <!-- 组件扫描 -->
+        <context:component-scan base-package="com.atguigu"></context:component-scan>
+    </beans>
+    ```
+#### (1) 表示database数据的class
+```java
+public class Book {
+    private String bookId;
+    private String userName;
+    private String userStatus;
+
+    public String getBookId() {
+        return bookId;
+    }
+
+    public void setBookId(String bookId) {
+        this.bookId = bookId;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public String getUserStatus() {
+        return userStatus;
+    }
+
+    public void setUserStatus(String userStatus) {
+        this.userStatus = userStatus;
+    }
+
+    @Override
+    public String toString() {
+        return "Book{" +
+                "bookId='" + bookId + '\'' +
+                ", userName='" + userName + '\'' +
+                ", userStatus='" + userStatus + '\'' +
+                '}';
+    }
+}
+```
+#### (2) Dao 增删改查
+```java
+@Repository
+public class BookDaoImpl implements BookDao {
+    //注入JdbcTemplate
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    /** methods都在下面👇 */
+}
+```
+##### (2a) 赠
+###### 一次添加单个mysql记录: jdbcTemplate.update
+```java
+/** 一次添加单个mysql记录 */
+@Override
+public void add(Book book) {
+    // 1 创建sql语句
+    String sql = "insert into t_book values(?,?,?)"; // ? 表示value放在这里
+    // 2 调用方法实现
+    Object[] args = {book.getBookId(), book.getUserName(), book.getUserStatus()};
+    int update = jdbcTemplate.update(sql, args); // 返回的是影响的行数
+    System.out.println(update);
+}
+```
+###### 一次添加多个mysql记录: jdbcTemplate.batchUpdate
+```java
+/** 一次添加多个mysql记录 */
+@Override
+public void batchAddBooks(List<Object[]> books) {
+    String sql = "insert into t_book values(?,?,?)"; // ? 表示value放在这里
+    int[] ints = jdbcTemplate.batchUpdate(sql, books);
+    System.out.println(Arrays.toString(ints));
+}
+```
+##### (2b) 改
+###### 一次修改单个mysql记录: jdbcTemplate.update
+```java
+/** 一次修改单个mysql记录 */
+@Override
+public void updateBook(Book book) {
+    String sql = "update t_book set userName=?,userStatus=? where bookId=?";
+    Object[] args = {book.getUserName(), book.getUserStatus(), book.getBookId()};
+    int update = jdbcTemplate.update(sql, args);
+    System.out.println(update);
+}
+```
+##### (2c) 删
+###### 一次删除单个mysql记录: jdbcTemplate.update
+```java
+/** 一次删除单个mysql记录 */
+@Override
+public void deleteBook(String bookId) {
+    String sql = "delete from t_book where bookId=?";
+    int update = jdbcTemplate.update(sql, bookId);
+    System.out.println(update);
+}
+```
+##### (2d) 查
+###### query并返回primitive: jdbcTemplate.queryForObject
+```java
+/** query并返回primitive */
+@Override
+public int queryOccurrence() {
+    String sql = "select count(*) from t_book";
+    // public <T> T queryForObject(String sql, Class<T> requiredType)
+    // documentation: https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/core/JdbcTemplate.html#queryForObject-java.lang.String-java.lang.Class-
+    Integer res = jdbcTemplate.queryForObject(sql, Integer.class);
+    return res;
+}
+```
+###### query并返回对象: jdbcTemplate.queryForObject
+```java
+/** query并返回对象 */
+@Override
+public Book queryBook(String bookId) {
+    String sql = "select * from t_book where bookId=?";
+    // public <T> T queryForObject(String sql, RowMapper<T> rowMapper, Object... args)
+    // documentation: https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/core/JdbcTemplate.html#queryForObject-java.lang.String-org.springframework.jdbc.core.RowMapper-java.lang.Object...-
+    Book res = jdbcTemplate.queryForObject(sql, new BeanPropertyRowMapper<>(Book.class), bookId);
+    return res;
+}
+```
+###### query并返回collection: jdbcTemplate.query
+```java
+/** query并返回collection */
+@Override
+public List<Book> queryAllBooks() {
+    String sql = "select * from t_book";
+    // public <T> List<T> query(String sql, RowMapper<T> rowMapper)
+    // documentation: https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/core/JdbcTemplate.html#query-java.lang.String-org.springframework.jdbc.core.RowMapper-
+    List<Book> res = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(Book.class));
+    return res;
+}
+```
+#### (3) Service使用Dao
+```java
+@Service
+public class BookService {
+    //注入dao
+    @Autowired
+    private BookDao bookDao;
+
+    /** 一次添加单个mysql记录 */
+    public void add(Book book) {
+        bookDao.add(book);
+    }
+    /** 一次添加多个mysql记录 */
+    public void batchAddBooks(List<Object[]> books) {
+        bookDao.batchAddBooks(books);
+    }
+    /** 一次修改单个mysql记录 */
+    public void updateBook(Book book) {
+        bookDao.updateBook(book);
+    }
+    /** 一次删除单个mysql记录 */
+    public void deleteBook(String bookId) {
+        bookDao.deleteBook(bookId);
+    }
+    /** query并返回primitive */
+    public int queryOccurrence() {
+        return bookDao.queryOccurrence();
+    }
+    /** query并返回对象 */
+    public Book queryBook(String bookId) {
+        return bookDao.queryBook(bookId);
+    }
+    /** query并返回collection */
+    public List<Book> queryAllBooks() {
+        return bookDao.queryAllBooks();
+    }
+}
+```
+#### (4) 使用
+```java
+ClassPathXmlApplicationContext cpx = new ClassPathXmlApplicationContext("bean5.xml");
+BookService bookService = cpx.getBean("bookService", BookService.class);
+/** 一次添加单个mysql记录 */
+Book book = new Book();
+book.setBookId("1");
+book.setUserName("xuliny");
+book.setUserStatus("Ok");
+bookService.add(book);
+/** 一次添加多个mysql记录 */
+List<Object[]> batchArgs = new ArrayList<>(); // books
+Object[] o1 = {"3", "java", "a"};
+Object[] o2 = {"4", "c++",  "b"};
+Object[] o3 = {"5", "MySQL","c"};
+batchArgs.add(o1); batchArgs.add(o2); batchArgs.add(o3);
+bookService.batchAddBooks(batchArgs);
+/** 一次修改单个mysql记录 */
+book.setBookId("1");
+book.setUserName("xuliny");
+book.setUserStatus("No");
+bookService.updateBook(book);
+/** 一次删除单个mysql记录 */
+bookService.deleteBook("1");
+/** query并返回primitive */
+System.out.println("Database has #"+bookService.queryOccurrence()+" records");
+/** query并返回对象 */
+System.out.println("Query result: "+bookService.queryBook("1"));
+/** query并返回collection */
+System.out.println("List of books: "+ Arrays.toString(bookService.queryAllBooks().toArray()));
+```
 ## spring mvc
 
 ## spring boot
