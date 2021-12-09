@@ -962,6 +962,32 @@ System.out.println("Query result: "+bookService.queryBook("1"));
 System.out.println("List of books: "+ Arrays.toString(bookService.queryAllBooks().toArray()));
 ```
 ### spring transaction
+- > 简述数据库的事务(transaction) & 四个特性
+    - 事务:用户定义的一系列数据库的操作,这些操作要么全不做要么全做。事务一旦commit，则其所做的修改会永久保存到数据库。
+    - 特性 ACID 原子性(Atomicity)、一致性(Consistency)、隔离性(Isolation)、持久性(Durability)
+        ||||
+        |---|---|---|
+        |原子性|Atomicity|事务是一个不可分割的工作单位，事务中的操作要么全部成功，要么全部失败
+        |一致性|Consistency|事务按照预期提交，数据的状态是可以预期的。也就是保证了事务对数据库的操作符合数据库的完整性约束
+        |隔离性|Isolation|当前事务不被其他事务的操作数据所干扰，并发事务之间要相互隔离。
+        |持久性|Durability|提交的事务对数据库中数据的改变是永久性的
+- > 事务是如何实现的?
+    -   |||
+        |---|---|
+        |A|A原子性是通过回滚日志（undo log）实现的。事务中的操作对数据库的修改都会先记录到这个回滚日志中(记录的都是相反的操作例如原来是insert记录的就是delete)，然后再在数据库中进行写入。发生错误时能够根据undo log成功回滚到数据库之前的状态 从而保证了原子性。
+        |I|I隔离性是通过 共享读锁排他写锁or MVCC实现的 (link: 数据库的隔离级别)
+        |D|持久性是通过Redo log(重做日志)实现的。对数据页的修改，先写到 redo log buffer 里面， 然后写到 redo log 的文件系统缓存里面(fwrite)，然后再写到磁盘的redo log文件里面。在事务提交后数据没来得及写进磁盘就宕机时，在下次重新启动后能够成功根据redo log里记录的重做继续修改数据库 从而保证了持久性。
+        |C|一致性是事务追求的最终目标：通过AID这些手段保证了C
+        
+        [reference 1](https://draveness.me/mysql-transaction/)<br/>
+        [reference 2](https://www.jianshu.com/p/bcbeb58963c3)
+- > 请简洁描述Mysql中InnoDB支持的四种事务隔离级别名称，以及逐级之间的区别？
+    - |事务隔离级别||脏读|不可重复读|幻读|
+      |---|---|---|---|---|
+      |Read Uncommited<br/>读到未提交数据也就是脏读(Dirty  Read))|所有事务都可以看到其他uncommited事务的执行结果。|Y|Y|Y
+      |Read Commited<br/>(只能读到commited内容)|它满足了隔离的简单定义: 事务只能看见已经commited事务所做的改变。这种隔离级别也不可重复读 (Nonrepeatable Read), 因为同一事务的一个实例处理的时候, 事务的其他实例可能会有新的Commit ,所以同一select 可以返回不同结果。||Y|Y
+      |Repeatable Read<br/>(可重读)|这是Mysql 的默认事务隔离级别，它确保同一事务的多个实例在并发读取数据时会看到同样的数据行。不过这会导致另一个棘手的问题: 幻读 (Phantom  Read): 当用户读取某一范围的数据行时, 并行的事务又在该范围内插入了新行, 当用户再读取该范围的数据行时，会发现有新的“幻影”行 。InnoDB通过多版本并发控制(MVCC)和间隙锁机制解决幻读问题。|||Y
+      |Serializable<br/>(可串行化)|这是最高的隔离级别，它通过强制排序事务，使之不可能互相冲突从而解决脏读, 幻读问题。它在每个读的数据行上加上共享锁。在这个级别，可能导致大量的超时现象和锁竞争。
 ## spring mvc
 
 ## spring boot
