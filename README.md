@@ -26,6 +26,13 @@
             - [3 Service使用Dao](#3-service%E4%BD%BF%E7%94%A8dao)
             - [4 使用](#4-%E4%BD%BF%E7%94%A8)
         - [spring transaction](#spring-transaction)
+            - [0 配置数据库连接](#0-%E9%85%8D%E7%BD%AE%E6%95%B0%E6%8D%AE%E5%BA%93%E8%BF%9E%E6%8E%A5)
+                - [xml](#xml)
+                - [annotation](#annotation)
+            - [3 Service中的methods配置事物@Transactional](#3-service%E4%B8%AD%E7%9A%84methods%E9%85%8D%E7%BD%AE%E4%BA%8B%E7%89%A9transactional)
+            - [4 使用](#4-%E4%BD%BF%E7%94%A8)
+                - [xml](#xml)
+                - [annotation](#annotation)
     - [spring mvc](#spring-mvc)
     - [spring boot](#spring-boot)
     - [spring cloud](#spring-cloud)
@@ -988,6 +995,124 @@ System.out.println("List of books: "+ Arrays.toString(bookService.queryAllBooks(
       |Read Commited<br/>(只能读到commited内容)|它满足了隔离的简单定义: 事务只能看见已经commited事务所做的改变。这种隔离级别也不可重复读 (Nonrepeatable Read), 因为同一事务的一个实例处理的时候, 事务的其他实例可能会有新的Commit ,所以同一select 可以返回不同结果。||Y|Y
       |Repeatable Read<br/>(可重读)|这是Mysql 的默认事务隔离级别，它确保同一事务的多个实例在并发读取数据时会看到同样的数据行。不过这会导致另一个棘手的问题: 幻读 (Phantom  Read): 当用户读取某一范围的数据行时, 并行的事务又在该范围内插入了新行, 当用户再读取该范围的数据行时，会发现有新的“幻影”行 。InnoDB通过多版本并发控制(MVCC)和间隙锁机制解决幻读问题。|||Y
       |Serializable<br/>(可串行化)|这是最高的隔离级别，它通过强制排序事务，使之不可能互相冲突从而解决脏读, 幻读问题。它在每个读的数据行上加上共享锁。在这个级别，可能导致大量的超时现象和锁竞争。
+- Spring transaction 管理API
+    - 提供一个接口，代表事务管理器，这个接口针对不同的框架提供不同的实现类
+    - <img src="./imgs/1.png" width="70%"/>
+- @Transactional注解的参数
+    - propagation<br/>
+      <img src="./imgs/2.png" width="50%"/><br/>
+      7种事务传播行为:
+      |||
+      |---|---|
+      |REQUIRED|如果add方法本身有事务, 调用update方法之后, update使用当前add里面的事务<br/>如果add方法本身没有事务, 调用update方法之后, update创建新的事务
+      |REQUIRES_NEW|无论add方法有没有事务, 调用update方法之后, 都会创建新的事务
+    - isolation: 4个隔离级别
+    - timeout：超时时间
+        - 事务需要在一定时间内进行提交，如果不提交进行回滚
+        - 默认值是 -1 ，设置时间以秒单位进行计算
+    - readOnly：true/false是否只读
+        - 读：查询操作，写：添加修改删除操作
+    - rollbackFor：回滚
+        - 设置出现哪些异常进行事务回滚
+    - noRollbackFor：不回滚
+        设置出现哪些异常不进行事务回滚
+#### (0) 配置数据库连接
+##### xml
+```xml
+<beans ...
+    xmlns:tx="http://www.springframework.org/schema/tx"
+    xsi:schemaLocation="...
+                        http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
+    <!-- 数据库连接池 -->
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" destroy-method="close">
+        <property name="url" value="jdbc:mysql://localhost:3306/<My database SCHEMAS>" />
+        <property name="username" value="root" />
+        <property name="password" value="<My Database Password>" />
+        <property name="driverClassName" value="com.mysql.jdbc.Driver" />
+    </bean>
+    <!-- JdbcTemplate对象 -->
+    <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+        <!--注入dataSource-->
+        <property name="dataSource" ref="dataSource"></property>
+    </bean>
+
+    <!-- 组件扫描 -->
+    <context:component-scan base-package="com.atguigu"></context:component-scan>
+
+    <!--  below are transaction related dependencies  -->
+    <!-- 创建事务管理器 -->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <!-- 注入数据源 -->
+        <property name="dataSource" ref="dataSource"></property>
+    </bean>
+
+    <!-- 开启事务注解 -->
+    <tx:annotation-driven transaction-manager="transactionManager"></tx:annotation-driven>
+</beans>
+```
+##### annotation
+#### (3) Service中的methods配置事物@Transactional
+```java
+/** 创建service，搭建dao，完成对象创建和注入关系 */
+@Service
+public class UserAccountService {
+    //注入dao
+    @Autowired
+    private UserDao userDao;
+
+    /** 在dao创建两个方法：多钱和少钱的方法，在service创建方法（转账的方法） */
+    @Transactional(propagation = Propagation.REQUIRED,
+            isolation = Isolation.REPEATABLE_READ,
+            timeout = -1,
+            readOnly = false,
+            rollbackFor = Exception.class)
+    public void accountMoneyTransfer() {
+        try {
+            System.out.println("lucy +100 money");
+            userDao.addMoney(100);    // lucy +100 money
+
+            // 模拟异常
+            int i = 10/0;
+
+            System.out.println("mary -100 money");
+            userDao.reduceMoney(100); // mary -100 money
+        } catch (Exception e) {
+            e.printStackTrace();
+            // explicitly rollback w.r.t. exception:
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            // spring's transaction will roll back for thrown non-runtime exception:
+            // throw e;
+        }
+    }
+
+   ...
+}
+```
+- [@Transactional回滚问题(try catch、嵌套)](https://www.cnblogs.com/pjjlt/p/10926398.html)
+#### (4) 使用
+##### xml
+```java
+@Test
+public void testSpringTransactionXML() {
+    ClassPathXmlApplicationContext cpx = new ClassPathXmlApplicationContext("bean6.xml");
+    UserAccountService userAccountService = cpx.getBean("userAccountService", UserAccountService.class);
+
+    userAccountService.queryAllUsers(); // before transaction
+    userAccountService.accountMoneyTransfer();
+    userAccountService.queryAllUsers(); // after transaction
+}
+```
+结果:
+```sh
+[User{id='1', userName='lucy', money=1000}, User{id='2', userName='mary', money=1000}]
+lucy +100 money
+java.lang.ArithmeticException: / by zero
+	at ....accountMoneyTransfer(UserAccountService.java:31)
+	...
+[User{id='1', userName='lucy', money=1000}, User{id='2', userName='mary', money=1000}]
+```
+##### annotation
+TODO
 ## spring mvc
 
 ## spring boot
