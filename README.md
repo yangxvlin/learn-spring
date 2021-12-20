@@ -1114,7 +1114,151 @@ java.lang.ArithmeticException: / by zero
 ##### annotation
 TODO
 ## spring mvc
+- 什么是MVC?
+    - MVC是一种软件架构的思想，将软件按照模型、视图、控制器来划分
+    - M：Model，模型层，指工程中的JavaBean，作用是处理数据
+        - JavaBean分为两类： 
+            - 一类称为实体类Bean：专门存储业务数据的，如 Student、User 等
+            - 一类称为业务处理 Bean：指 Service 或 Dao 对象，专门用于处理业务逻辑和数据访问。
+    - V：View，视图层，指工程中的html或jsp等页面，作用是与用户进行交互，展示数据
+    - C：Controller，控制层，指工程中的servlet，作用是接收请求和响应浏览器
+    - MVC的工作流程： 用户通过视图层发送请求到服务器，在服务器中请求被Controller接收，Controller 调用相应的Model层处理请求，处理完毕将结果返回到Controller，Controller再根据请求处理的结果找到相应的View视图，渲染数据后最终响应给浏览器
+- [Servlet should have a mapping and cannot resolve Servlet](https://stackoverflow.com/questions/43153904/servlet-should-have-a-mapping-and-cannot-resolve-servlet)
+- 结构
+    <img src="./imgs/3.png" width="50%" />
+    - Controller
+        ```java
+        @Controller
+        public class HelloController {
+            // @RequestMapping注解：处理请求和控制器方法之间的映射关系
+            // @RequestMapping注解的value属性可以通过请求地址匹配请求，/表示的当前工程的上下文路径
+            // localhost:8080/springMVC/
+            @RequestMapping("/")
+            public String index() {
+                //设置视图名称
+                return "index"; // index.html
+            }
 
+            @RequestMapping("/hello")
+            public String HelloWorld() {
+                return "target"; // target.html
+            }
+        }
+        ```
+    - SpringMVC.xml
+        ```xml
+        <?xml version="1.0" encoding="UTF-8"?>
+        <beans xmlns="http://www.springframework.org/schema/beans"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xmlns:context="http://www.springframework.org/schema/context"
+            xmlns:mvc="http://www.springframework.org/schema/mvc"
+            xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                                http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd
+                                http://www.springframework.org/schema/mvc https://www.springframework.org/schema/mvc/spring-mvc.xsd">
+            <!-- 自动扫描包 -->
+            <context:component-scan base-package="com.atguigu.mvc.controller"/>
+
+            <!-- 配置Thymeleaf视图解析器 -->
+            <bean id="viewResolver"
+                class="org.thymeleaf.spring5.view.ThymeleafViewResolver">
+                <property name="order" value="1"/>
+                <property name="characterEncoding" value="UTF-8"/>
+                <property name="templateEngine">
+                <bean class="org.thymeleaf.spring5.SpringTemplateEngine">
+                    <property name="templateResolver">
+                        <bean
+                                class="org.thymeleaf.spring5.templateresolver.SpringResourceTemplateResolver">
+                            <!-- 视图前缀 -->
+                            <property name="prefix" value="/WEB-INF/templates/"/>
+                            <!-- 视图后缀 -->
+                            <property name="suffix" value=".html"/>
+                            <property name="templateMode" value="HTML5"/>
+                            <property name="characterEncoding" value="UTF-8" />
+                        </bean>
+                    </property>
+                </bean>
+                </property>
+            </bean>
+            <!--
+                处理静态资源，例如html、js、css、jpg
+                若只设置该标签，则只能访问静态资源，其他请求则无法访问
+                此时必须设置<mvc:annotation-driven/>解决问题
+            -->
+            <mvc:default-servlet-handler/>
+
+            <!-- 开启mvc注解驱动 -->
+            <mvc:annotation-driven>
+                <mvc:message-converters>
+                    <!-- 处理响应中文内容乱码 -->
+                    <bean
+                            class="org.springframework.http.converter.StringHttpMessageConverter">
+                        <property name="defaultCharset" value="UTF-8" />
+                        <property name="supportedMediaTypes">
+                            <list>
+                                <value>text/html</value>
+                                <value>application/json</value>
+                            </list>
+                        </property>
+                    </bean>
+                </mvc:message-converters>
+            </mvc:annotation-driven>
+        </beans>
+        ```
+    - web.xml <br/>
+        创建: <img src="./imgs/4.png" width="70%" />
+        ```xml
+        <?xml version="1.0" encoding="UTF-8"?>
+        <web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd"
+                version="4.0">
+            <!-- 配置SpringMVC的前端控制器，对浏览器发送的请求统一进行处理 -->
+            <servlet>
+                <servlet-name>springMVC</servlet-name>
+                <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+                <!-- 通过初始化参数指定SpringMVC配置文件的位置和名称 -->
+                <init-param>
+                    <!-- contextConfigLocation为固定值 -->
+                    <param-name>contextConfigLocation</param-name>
+                    <!-- 使用classpath:表示从类路径查找配置文件，例如maven工程中的
+                    src/main/resources -->
+                    <param-value>classpath:springMVC.xml</param-value>
+                </init-param>
+                <!--
+                作为框架的核心组件，在启动过程中有大量的初始化操作要做
+                而这些操作放在第一次请求时才执行会严重影响访问速度
+                因此需要通过此标签将启动控制DispatcherServlet的初始化时间提前到服务器启动时
+                -->
+                <load-on-startup>1</load-on-startup>
+            </servlet>
+            <servlet-mapping>
+                <servlet-name>springMVC</servlet-name>
+                <!--
+                    设置springMVC的核心控制器所能处理的请求的请求路径
+                    /所匹配的请求可以是/login或.html或.js或.css方式的请求路径
+                    但是/不能匹配.jsp请求路径的请求
+                -->
+                <url-pattern>/</url-pattern>
+            </servlet-mapping>
+        </web-app>
+        ```
+    - index
+        ```html
+        <!DOCTYPE html>
+        <html lang="en" xmlns:th="http://www.thymeleaf.org">
+        <head>
+            <meta charset="UTF-8">
+            <title>首页</title>
+        </head>
+        <body>
+            <h1>首页</h1>
+            <!--  因为是theme leaf, 不@(...) 就要/SpringMVC/hello  -->
+            <a th:href="@{/hello}">HelloWorld</a><br/>
+        </body>
+        </html>
+        ```
+    - how to run
+        - <img src="./imgs/5.png" width="70%" />
 ## spring boot
 
 ## spring cloud
