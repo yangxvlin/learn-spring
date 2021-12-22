@@ -35,6 +35,12 @@
                 - [annotation](#annotation)
     - [spring mvc](#spring-mvc)
         - [hello spring mvc](#hello-spring-mvc)
+        - [@RequestedMapping](#requestedmapping)
+            - [1 @RequestedMapping注解修饰的位置 class, method](#1-requestedmapping%E6%B3%A8%E8%A7%A3%E4%BF%AE%E9%A5%B0%E7%9A%84%E4%BD%8D%E7%BD%AE-class-method)
+            - [2 @RequestedMapping注解的value属性](#2-requestedmapping%E6%B3%A8%E8%A7%A3%E7%9A%84value%E5%B1%9E%E6%80%A7)
+            - [3 @RequestedMapping注解的method属性](#3-requestedmapping%E6%B3%A8%E8%A7%A3%E7%9A%84method%E5%B1%9E%E6%80%A7)
+            - [4 持ant风格路径](#4-%E6%8C%81ant%E9%A3%8E%E6%A0%BC%E8%B7%AF%E5%BE%84)
+            - [5 支持路径中的占位符](#5-%E6%94%AF%E6%8C%81%E8%B7%AF%E5%BE%84%E4%B8%AD%E7%9A%84%E5%8D%A0%E4%BD%8D%E7%AC%A6)
     - [spring boot](#spring-boot)
     - [spring cloud](#spring-cloud)
 
@@ -1260,6 +1266,96 @@ TODO
     ```
 - how to run
     - <img src="./imgs/5.png" width="70%" />
+### @RequestedMapping
+#### (1) @RequestedMapping注解修饰的位置 class, method
+```java
+@Controller
+@RequestMapping("/test")
+public class RequestMappingController {
+    //此时请求映射所映射的请求的请求路径为：/test/testRequestMapping
+    @RequestMapping("/testRequestMapping")
+    public String testRequestMapping(){
+        return "success";
+    }
+}
+```
+#### (2) @RequestedMapping注解的value属性
+```java
+@Controller
+public class TestController {
+    //两种路径都可以匹配这个controller
+    @RequestMapping(value = {"/test", "/testRequestMapping"})
+    public String testRequestMapping2() {
+        return "success";
+    }
+}
+```
+#### (3) @RequestedMapping注解的method属性
+```java
+@Controller
+public class TestController {
+    @RequestMapping(
+            value = {"/testRequestMapping3"},
+            method = {RequestMethod.GET}
+    )
+    public String testRequestMapping3() {
+        return "success";
+    }
+}
+```
+```html
+<form th:action="@{/testRequestMapping3}" method="get">
+    <input type="submit" value="测试GET">
+</form>
+<form th:action="@{/testRequestMapping3}" method="post">
+    <input type="submit" value="测试不支持的POST">
+</form>
+```
+常用的请求方式有get，post，put，delete
+
+但是目前浏览器只支持get和post，若在form表单提交时，为method设置了其他请求方式的字符串（put或delete），则按照默认的请求方式get处理
+
+若要发送put和delete请求，则需要通过spring提供的过滤器HiddenHttpMethodFilter，在RESTful部分会讲到
+#### (4) 持ant风格路径
+- ？：表示任意的单个字符
+- *：表示任意的0个或多个字符
+- **：表示任意的一层或多层目录
+    - 注意：在使用\*\*时，只能使用/\*\*/xxx的方式
+```java
+@Controller
+public class TestController {
+    @RequestMapping("/a?a/test")
+    public String testAnt() {
+        return "success";
+    }
+    @RequestMapping("/**/test2")
+    public String testAnt2() {
+        return "success";
+    }
+}
+```
+#### (5) 支持路径中的占位符
+原始方式：/deleteUser?id=1  
+rest方式：/deleteUser/1  ----> /delete/{id}
+
+```java
+@Controller
+public class TestController {
+    @RequestMapping("/testRest/{id}/{username}")
+    public String testRest(@PathVariable("id") String id, @PathVariable("username") String username){
+        System.out.println("id:"+id+",username:"+username);
+        return "success";
+    }
+    //最终输出的内容为-->id:1,username:admin
+}
+```
+```html
+<a th:href="@{/testRest/1/admin}">测试@RequestMapping的占位符-->/testRest</a><br>
+```
+
+
+
+
 ## spring boot
 
 ## spring cloud
