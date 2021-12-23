@@ -41,6 +41,12 @@
             - [3 @RequestedMapping注解的method属性](#3-requestedmapping%E6%B3%A8%E8%A7%A3%E7%9A%84method%E5%B1%9E%E6%80%A7)
             - [4 持ant风格路径](#4-%E6%8C%81ant%E9%A3%8E%E6%A0%BC%E8%B7%AF%E5%BE%84)
             - [5 支持路径中的占位符](#5-%E6%94%AF%E6%8C%81%E8%B7%AF%E5%BE%84%E4%B8%AD%E7%9A%84%E5%8D%A0%E4%BD%8D%E7%AC%A6)
+        - [获取Request里面的parameters](#%E8%8E%B7%E5%8F%96request%E9%87%8C%E9%9D%A2%E7%9A%84parameters)
+                - [1 controller method的argumets](#1-controller-method%E7%9A%84argumets)
+            - [2 @RequestParam 设置形参默认值](#2-requestparam-%E8%AE%BE%E7%BD%AE%E5%BD%A2%E5%8F%82%E9%BB%98%E8%AE%A4%E5%80%BC)
+            - [3 @RequestHeader](#3-requestheader)
+            - [4 @CookieValue](#4-cookievalue)
+            - [5 通过POJO获取请求参数](#5-%E9%80%9A%E8%BF%87pojo%E8%8E%B7%E5%8F%96%E8%AF%B7%E6%B1%82%E5%8F%82%E6%95%B0)
     - [spring boot](#spring-boot)
     - [spring cloud](#spring-cloud)
 
@@ -1353,8 +1359,155 @@ public class TestController {
 <a th:href="@{/testRest/1/admin}">测试@RequestMapping的占位符-->/testRest</a><br>
 ```
 
+### 获取Request里面的parameters
+##### (1) controller method的argumets
+```java
+@RequestMapping("/testParam")
+public String testParam(String username, String password, String hobby){ 
+    // 多个hobby会被','concatnate起来
+    System.out.println("username:"+username+",password:"+password+",hobby:"+hobby);
+    return "success";
+}
+@RequestMapping("/testParam")
+public String testParam(String username, String password, String[] hobby){ 
+    // 多个hobby会在array里
+    System.out.println("username:"+username+",password:"+password+",hobby:"+Arrays.toString(hobby));
+    return "success";
+}
+// username:admin,password:123456,hobby:[game, eat]
+```
+```html
+<a th:href="@{/testParam(username='admin',password=123456,hobby='game',hobby='eat')}">测试获取请求参数-->/testParam</a><br>
+```
+#### (2) @RequestParam 设置形参默认值
+|atttribute||
+|---|---|
+|value|指定为形参赋值的请求参数的参数名
+|required|设置是否必须传输此请求参数，默认值为true<br/>1) 若设置为true时, 则当前请求必须传输value所指定的请求参数，若没有传输该请求参数，且没有设置defaultValue属性，则页面报错400：Required String parameter 'xxx' is not present<br/>2) 若设置为false时, 则当前请求不是必须传输value所指定的请求参数，若没有传输，则注解所标识的形参的值为null
+|defaultValue|不管required属性值为true或false，当value所指定的请求参数没有传输或传输的值为"" (空字符串)时，则使用默认值为形参赋值
+```java
+@RequestMapping("/testParam")
+public String testParam(String username, String password, String[] hobby,
+    @RequestParam(name = "sayHaha", required = false, defaultValue = "haha") String note
+    ){
+    // 多个hobby会在array里
+    System.out.println("username:"+username+",password:"+password+",hobby:"+ Arrays.toString(hobby));
+    System.out.println("note: "+note);
+    return "success";
+}
+// username:admin,password:123456,hobby:[game, eat]
+// note: haha
+```
 
+#### (3) @RequestHeader
+@RequestHeader是将请求头信息和控制器方法的形参创建映射关系  
+@RequestHeader注解一共有三个属性：value、required、defaultValue，用法同@RequestParam
+```java
+@RequestMapping("/testParam")
+public String testParam(String username, String password, String[] hobby,
+    @RequestParam(name = "sayHaha", required = false, defaultValue = "haha") String note,
+    @RequestHeader String host
+    ){
+    // 多个hobby会在array里
+    System.out.println("username:"+username+",password:"+password+",hobby:"+ Arrays.toString(hobby));
+    System.out.println("note: "+note);
+    System.out.println("host: "+host);
+    return "success";
+}
+// username:admin,password:123456,hobby:[game, eat]
+// note: haha
+// host: localhost:8080
+```
 
+#### (4) @CookieValue
+类似于上面, 不过将cookie数据和控制器方法的形参创建映射关系
+
+#### (5) 通过POJO获取请求参数
+request提交的参数跟object的attributes都match, controller method的parameter可以直接放Object
+- Object
+    ```java
+    public class User {
+        private String userName;
+        private String password;
+        private String sex;
+        private String age;
+        private String email;
+
+        public User() {
+        }
+
+        public String getUserName() {
+            return userName;
+        }
+
+        public void setUserName(String userName) {
+            this.userName = userName;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public void setPassword(String password) {
+            this.password = password;
+        }
+
+        public String getSex() {
+            return sex;
+        }
+
+        public void setSex(String sex) {
+            this.sex = sex;
+        }
+
+        public String getAge() {
+            return age;
+        }
+
+        public void setAge(String age) {
+            this.age = age;
+        }
+
+        public String getEmail() {
+            return email;
+        }
+
+        public void setEmail(String email) {
+            this.email = email;
+        }
+
+        @Override
+        public String toString() {
+            return "User{" +
+                    "userName='" + userName + '\'' +
+                    ", password='" + password + '\'' +
+                    ", sex='" + sex + '\'' +
+                    ", age='" + age + '\'' +
+                    ", email='" + email + '\'' +
+                    '}';
+        }
+    }
+    ```
+- Controller method
+    ```java
+    @RequestMapping("/testpojo")
+    public String testPOJO(User user){
+        System.out.println(user);
+        return "success";
+    }
+    //最终结果-->User{id=null, username='张三', password='123', age=23, sex='男', email='123@qq.com'}
+    ```
+- web
+    ```html
+    <form th:action="@{/testpojo}" method="post">
+        用户名：<input type="text" name="userName"><br>
+        密码：<input type="password" name="password"><br>
+        性别：<input type="radio" name="sex" value="男">男<input type="radio" name="sex" value="女">女<br>
+        年龄：<input type="text" name="age"><br>
+        邮箱：<input type="text" name="email"><br>
+        <input type="submit">
+    </form>
+    ```
 
 ## spring boot
 
