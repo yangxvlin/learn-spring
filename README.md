@@ -1273,6 +1273,7 @@ TODO
 - how to run
     - <img src="./imgs/5.png" width="70%" />
 ### @RequestedMapping
+
 #### (1) @RequestedMapping注解修饰的位置 class, method
 ```java
 @Controller
