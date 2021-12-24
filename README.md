@@ -47,6 +47,14 @@
             - [3 @RequestHeader](#3-requestheader)
             - [4 @CookieValue](#4-cookievalue)
             - [5 通过POJO获取请求参数](#5-%E9%80%9A%E8%BF%87pojo%E8%8E%B7%E5%8F%96%E8%AF%B7%E6%B1%82%E5%8F%82%E6%95%B0)
+        - [给Request 域对象field 共享返回数据](#%E7%BB%99request-%E5%9F%9F%E5%AF%B9%E8%B1%A1field-%E5%85%B1%E4%BA%AB%E8%BF%94%E5%9B%9E%E6%95%B0%E6%8D%AE)
+            - [1 ModelAndView 推荐](#1-modelandview-%E6%8E%A8%E8%8D%90)
+            - [2 BindingAwareModelMap](#2-bindingawaremodelmap)
+                - [2a Model](#2a-model)
+                - [2b ModelMap](#2b-modelmap)
+                - [2c Map](#2c-map)
+            - [3 向session域共享数据](#3-%E5%90%91session%E5%9F%9F%E5%85%B1%E4%BA%AB%E6%95%B0%E6%8D%AE)
+            - [4 向application域共享数据](#4-%E5%90%91application%E5%9F%9F%E5%85%B1%E4%BA%AB%E6%95%B0%E6%8D%AE)
     - [spring boot](#spring-boot)
     - [spring cloud](#spring-cloud)
 
@@ -1509,7 +1517,88 @@ request提交的参数跟object的attributes都match, controller method的parame
         <input type="submit">
     </form>
     ```
-
+### 给Request 域对象(field) 共享(返回)数据
+success.html:
+```html
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <p>Success</p>
+    <!-- 需要共享的数据 (response data) -->
+    <p th:text="${testScope}"></p>
+</body>
+</html>
+```
+#### (1) ModelAndView (推荐)
+```java
+@RequestMapping("/testModelAndView")
+public ModelAndView testModelAndView(){
+    /**
+     * ModelAndView有Model和View的功能
+     * Model主要用于向请求域共享数据
+     * View主要用于设置视图，实现页面跳转
+     */
+    ModelAndView mav = new ModelAndView();
+    //向request域共享数据
+    mav.addObject("testScope", "hello,ModelAndView");
+    //设置返回的视图，实现页面跳转
+    mav.setViewName("success");
+    return mav;
+}
+```
+#### (2) BindingAwareModelMap
+Model、ModelMap、Map类型的参数其实本质上都是 BindingAwareModelMap 类型的
+```java
+public interface Model{}
+public class ModelMap extends LinkedHashMap<String, Object> {}
+public class ExtendedModelMap extends ModelMap implements Model {}
+public class BindingAwareModelMap extends ExtendedModelMap {}
+```
+##### (2a) Model
+```java
+@RequestMapping("/testModel")
+public String testModel(Model model){
+    model.addAttribute("testScope", "hello,Model");
+    return "success";
+}
+```
+##### (2b) ModelMap
+```java
+@RequestMapping("/testModelMap")
+public String testModelMap(ModelMap modelMap){
+    modelMap.addAttribute("testScope", "hello,ModelMap");
+    return "success";
+}
+```
+##### (2c) Map
+```java
+@RequestMapping("/testMap")
+public String testMap(Map<String, Object> map){
+    map.put("testScope", "hello,Map");
+    return "success";
+}
+```
+#### (3) 向session域共享数据
+```java
+@RequestMapping("/testSession")
+public String testSession(HttpSession session){
+    session.setAttribute("testSessionScope", "hello,session");
+    return "success";
+}
+```
+#### (4) 向application域共享数据
+```java
+@RequestMapping("/testApplication")
+public String testApplication(HttpSession session){
+    ServletContext application = session.getServletContext();
+    application.setAttribute("testApplicationScope", "hello,application");
+    return "success";
+}
+```
 ## spring boot
 
 ## spring cloud
