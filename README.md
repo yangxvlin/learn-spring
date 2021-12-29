@@ -55,6 +55,14 @@
                 - [2c Map](#2c-map)
             - [3 向session域共享数据](#3-%E5%90%91session%E5%9F%9F%E5%85%B1%E4%BA%AB%E6%95%B0%E6%8D%AE)
             - [4 向application域共享数据](#4-%E5%90%91application%E5%9F%9F%E5%85%B1%E4%BA%AB%E6%95%B0%E6%8D%AE)
+    - [如何让浏览器也能发送Post Delete](#%E5%A6%82%E4%BD%95%E8%AE%A9%E6%B5%8F%E8%A7%88%E5%99%A8%E4%B9%9F%E8%83%BD%E5%8F%91%E9%80%81post-delete)
+    - [HttpMessageConverter](#httpmessageconverter)
+        - [@RequestBody](#requestbody)
+        - [RequestEntity](#requestentity)
+        - [@ResponseBody](#responsebody)
+            - [如何返回json](#%E5%A6%82%E4%BD%95%E8%BF%94%E5%9B%9Ejson)
+            - [@RestController注解](#restcontroller%E6%B3%A8%E8%A7%A3)
+        - [ResponseEntity](#responseentity)
     - [spring boot](#spring-boot)
     - [spring cloud](#spring-cloud)
 
@@ -1599,6 +1607,107 @@ public String testApplication(HttpSession session){
     return "success";
 }
 ```
+
+## 如何让浏览器也能发送Post Delete
+由于浏览器只支持发送get和post方式的请求，那么该如何发送put和delete请求呢？
+
+SpringMVC 提供了 HiddenHttpMethodFilter 帮助我们将 POST 请求转换为 DELETE 或 PUT 请求 HiddenHttpMethodFilter 处理put和delete请求的条件：
+
+a>当前请求的请求方式必须为post
+
+b>当前请求必须传输请求参数_method
+
+满足以上条件，HiddenHttpMethodFilter 过滤器就会将当前请求的请求方式转换为请求参数_method的值，因此请求参数_method的值才是最终的请求方式在web.xml中注册HiddenHttpMethodFilter
+
+```xml
+<filter>
+    <filter-name>HiddenHttpMethodFilter</filter-name>
+    <filter-class>org.springframework.web.filter.HiddenHttpMethodFilter</filterclass>
+</filter>
+<filter-mapping>
+    <filter-name>HiddenHttpMethodFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+</filter-mapping>
+```
+
+## HttpMessageConverter
+- HttpMessageConverter: 报文信息转换器，
+    - 将请求报文转换为Java对象 或
+    - 将Java对象转换为响应报文
+
+HttpMessageConverter提供了两个注解和两个类型：@RequestBody，@ResponseBody，RequestEntity，ResponseEntity
+
+### @RequestBody
+把Http request body变成controller method的parameter
+```xml
+<form th:action="@{/testRequestBody}" method="post">
+    用户名：<input type="text" name="username"><br>
+    密码：<input type="password" name="password"><br>
+    <input type="submit">
+</form>
+```
+
+```java
+@RequestMapping("/testRequestBody")
+public String testRequestBody(@RequestBody String requestBody){
+    System.out.println("requestBody:"+requestBody);
+    return "success";
+}
+// requestBody:username=admin&password=123456
+```
+
+### RequestEntity
+将整个http报文赋值给一个parameter
+```java
+@RequestMapping("/testRequestEntity")
+public String testRequestEntity(RequestEntity<String> requestEntity){
+    System.out.println("requestHeader:"+requestEntity.getHeaders());
+    System.out.println("requestBody:"+requestEntity.getBody());
+    return "success";
+}
+// 输出结果： 
+// requestHeader:[host:"localhost:8080", connection:"keep-alive", content-length:"27", cache-control:"max-age=0", sec-ch-ua:"" Not A;Brand";v="99", "Chromium";v="90", "Google Chrome";v="90"", sec-ch-ua-mobile:"?0", upgrade-insecure-requests:"1", origin:"http://localhost:8080", user-agent:"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36"] 
+// requestBody:username=admin&password=123
+```
+
+### @ResponseBody
+直接将controller method的返回值返回到浏览器的屏幕上
+```java
+@RequestMapping("/testResponseBody")
+@ResponseBody
+public String testResponseBody(){
+    return "success";
+}
+// 结果：浏览器页面显示success
+```
+
+#### 如何返回json
+1. 导入jackson的依赖
+    ```xml
+    <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>2.12.1</version>
+    </dependency>
+    ```
+2. 在SpringMVC的核心配置文件中开启mvc的注解驱动，此时在HandlerAdaptor中会自动装配一个消息转换器：MappingJackson2HttpMessageConverter，可以将响应到浏览器的Java对象转换为Json格式的字符串```<mvc:annotation-driven />```
+3. 在controller method上使用@ResponseBody注解进行标识
+4. 将Java对象直接作为控制器方法的返回值返回，就会自动转换为Json格式的字符串
+    ```java
+    @RequestMapping("/testResponseUser")
+    @ResponseBody
+    public User testResponseUser(){
+        return new User(1001,"admin","123456",23,"男");
+    }
+    // 浏览器的页面中展示的结果：
+    // {"id":1001,"username":"admin","password":"123456","age":23,"sex":"男"}
+    ```
+#### @RestController注解
+标识在controller的类上 = 为类添加了@Controller注解+为其中的每个方法添加了@ResponseBody注解
+### ResponseEntity
+用于控制器方法的返回值类型，该控制器方法的返回值就是响应到浏览器的响应报文
+
+可以用来实现下载文件的功能
 ## spring boot
 
 ## spring cloud
