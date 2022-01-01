@@ -67,6 +67,9 @@
         - [配置](#%E9%85%8D%E7%BD%AE)
         - [实现](#%E5%AE%9E%E7%8E%B0)
         - [多个拦截器的执行顺序](#%E5%A4%9A%E4%B8%AA%E6%8B%A6%E6%88%AA%E5%99%A8%E7%9A%84%E6%89%A7%E8%A1%8C%E9%A1%BA%E5%BA%8F)
+    - [ExceptionResolver 异常处理器](#exceptionresolver-%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86%E5%99%A8)
+        - [xml使用](#xml%E4%BD%BF%E7%94%A8)
+        - [注解使用](#%E6%B3%A8%E8%A7%A3%E4%BD%BF%E7%94%A8)
     - [spring boot](#spring-boot)
     - [spring cloud](#spring-cloud)
 
@@ -111,13 +114,13 @@
         - 题外话: web项目更多的使用ApplicationContext因为我们更希望加载对象的cost都位于项目启动的时候
     - ApplicationContext接口的实现类
         - ```java
-        //加载src/文件夹下的xml配置
-        ApplicationContext fsx = new ClassPathXmlApplicationContext("bean.xml");
-        ```
+            //加载src/文件夹下的xml配置
+            ApplicationContext fsx = new ClassPathXmlApplicationContext("bean.xml");
+          ```
         - ```java
-        //根据路径加载xml配置
-        ApplicationContext fsx = new FileSystemXmlApplicationContext("D:/project/bean.xml");
-        ```
+            //根据路径加载xml配置
+            ApplicationContext fsx = new FileSystemXmlApplicationContext("D:/project/bean.xml");
+          ```
 - Bean对象 的 属性注入
     - > IoC和DI的区别?
         - DI不完全等同于IoC，DI是IoC这个设计思想的一种实现方式。
@@ -1766,6 +1769,48 @@ public class FirstInterceptor implements HandlerInterceptor {
     - preHandle()返回false和它之前的拦截器的preHandle()都会执行
     - postHandle()都不执行，
     - 返回false的拦截器之前的拦截器的afterComplation()会执行
+
+## ExceptionResolver 异常处理器
+- SpringMVC提供了一个处理控制器方法执行过程中所出现的异常的接口：HandlerExceptionResolver
+- HandlerExceptionResolver接口的实现类有
+    - DefaultHandlerExceptionResolver和
+    - SimpleMappingExceptionResolver
+
+### xml使用
+```xml
+<bean
+    class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+    <property name="exceptionMappings">
+        <props>
+        <!--
+            properties的键表示处理器方法执行过程中出现的异常
+            properties的值表示若出现指定异常时，设置一个新的视图名称，跳转到指定页面
+        -->
+        <prop key="java.lang.ArithmeticException">error</prop>
+        </props>
+    </property>
+    <!--
+        设置将异常信息共享在请求域中的键 (把上面的ArithmeticException 设置进View)
+    -->
+    <property name="exceptionAttribute" value="ex"></property>
+</bean>
+```
+### 注解使用
+```java
+//@ControllerAdvice将当前类标识为异常处理的组件
+@ControllerAdvice
+public class ExceptionController {
+    //@ExceptionHandler用于设置所标识方法处理的异常
+    @ExceptionHandler(ArithmeticException.class)
+    //ex表示当前请求处理中出现的异常对象
+    public String handleArithmeticException(Exception ex, Model model){
+        model.addAttribute("ex", ex);
+        return "error";
+    }
+}
+```
+
+
 ## spring boot
 
 ## spring cloud
