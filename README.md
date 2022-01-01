@@ -63,6 +63,10 @@
             - [如何返回json](#%E5%A6%82%E4%BD%95%E8%BF%94%E5%9B%9Ejson)
             - [@RestController注解](#restcontroller%E6%B3%A8%E8%A7%A3)
         - [ResponseEntity](#responseentity)
+    - [拦截器 Interceptor](#%E6%8B%A6%E6%88%AA%E5%99%A8-interceptor)
+        - [配置](#%E9%85%8D%E7%BD%AE)
+        - [实现](#%E5%AE%9E%E7%8E%B0)
+        - [多个拦截器的执行顺序](#%E5%A4%9A%E4%B8%AA%E6%8B%A6%E6%88%AA%E5%99%A8%E7%9A%84%E6%89%A7%E8%A1%8C%E9%A1%BA%E5%BA%8F)
     - [spring boot](#spring-boot)
     - [spring cloud](#spring-cloud)
 
@@ -1708,6 +1712,60 @@ public String testResponseBody(){
 用于控制器方法的返回值类型，该控制器方法的返回值就是响应到浏览器的响应报文
 
 可以用来实现下载文件的功能
+
+## 拦截器 Interceptor
+### 配置
+```xml
+<bean class="com.atguigu.interceptor.FirstInterceptor"></bean>
+<ref bean="firstInterceptor"></ref>
+<!-- 以上两种配置方式都是对DispatcherServlet所处理的所有的请求进行拦截 -->
+<mvc:interceptors>
+    <mvc:interceptor>
+        <mvc:mapping path="/**"/>
+        <mvc:exclude-mapping path="/testRequestEntity"/>
+        <ref bean="firstInterceptor"></ref>
+    </mvc:interceptor>
+</mvc:interceptors>
+<!--
+以上配置方式可以通过ref或bean标签设置拦截器，通过mvc:mapping设置需要拦截的请求，通过
+mvc:exclude-mapping设置需要排除的请求 = 不需要拦截的请求
+-->
+```
+### 实现
+```java
+public class FirstInterceptor implements HandlerInterceptor {
+    // controller method 执行之前执行preHandle()，其boolean类型的返回值表示是否拦截或放行
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response,
+                             Object object) throws Exception {
+        return false; // true: 放行, false: 拦截
+    }
+
+    // controller method 执行之后执行postHandle()
+    @Override
+    public void postHandle(HttpServletRequest request, HttpServletResponse response,
+                           Object object, ModelAndView modelAndView) throws Exception {
+
+    }
+
+    // 处理完View和Model，渲染视图完毕之后执行afterCompletion()
+    @Override
+    public void afterCompletion(HttpServletRequest request,
+                                HttpServletResponse response, Object object, Exception exception)
+            throws Exception {
+
+    }
+}
+```
+### 多个拦截器的执行顺序
+- 若每个拦截器的preHandle()都返回true
+    - 此时多个拦截器的执行顺序和拦截器在SpringMVC的配置文件的配置顺序有关：
+        - preHandle()会按照配置的顺序执行，
+        - postHandle()和afterComplation()会按照配置的反序执行
+- 若某个拦截器的preHandle()返回了false
+    - preHandle()返回false和它之前的拦截器的preHandle()都会执行
+    - postHandle()都不执行，
+    - 返回false的拦截器之前的拦截器的afterComplation()会执行
 ## spring boot
 
 ## spring cloud
