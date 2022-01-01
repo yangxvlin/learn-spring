@@ -70,6 +70,11 @@
     - [ExceptionResolver 异常处理器](#exceptionresolver-%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86%E5%99%A8)
         - [xml使用](#xml%E4%BD%BF%E7%94%A8)
         - [注解使用](#%E6%B3%A8%E8%A7%A3%E4%BD%BF%E7%94%A8)
+    - [springMVC DispatcherServlet](#springmvc-dispatcherservlet)
+        - [springMVC组件](#springmvc%E7%BB%84%E4%BB%B6)
+        - [springMVC执行流程](#springmvc%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B)
+        - [初始化过程](#%E5%88%9D%E5%A7%8B%E5%8C%96%E8%BF%87%E7%A8%8B)
+        - [调用组件处理request的过程](#%E8%B0%83%E7%94%A8%E7%BB%84%E4%BB%B6%E5%A4%84%E7%90%86request%E7%9A%84%E8%BF%87%E7%A8%8B)
     - [spring boot](#spring-boot)
     - [spring cloud](#spring-cloud)
 
@@ -1810,6 +1815,36 @@ public class ExceptionController {
 }
 ```
 
+## springMVC DispatcherServlet
+### springMVC组件
+
+|||需要工程师开发|作用
+|---|---|---|---|
+|DispatcherServlet|前端控制器|No|统一处理request，整个流程控制的中心，由它调用其它组件处理用户的请求
+|HandlerMapping|处理器映射器|No|根据请求的url、method等信息查找符合的Handler (controller method)
+|Handler|处理器|Yes|在DispatcherServlet的控制下Handler对具体的用户请求进行处理 (程序员写的controller method)
+|HandlerAdapter|处理器适配器|No|通过HandlerAdapter对handler (controller method) 进行执行
+|ViewResolver|视图解析器|No|进行视图解析，得到相应的视图，例如：ThymeleafView、InternalResourceView、RedirectView
+|View|视图|N/a|View
+
+### springMVC执行流程
+<img src="imgs/6.png" width="50%" />
+
+1. 用户点击某个请求路径，发起一个 HTTP request 请求，该请求会被提交到 DispatcherServlet（前端控制器）
+2. 由 DispatcherServlet 请求一个或多个 HandlerMapping（处理器映射器），并返回一个执行链（HandlerExecutionChain）。
+3. DispatcherServlet 将执行链返回的 Handler 信息发送给 HandlerAdapter（处理器适配器）
+4. HandlerAdapter 根据 Handler 信息找到并执行相应的 Handler（常称为 Controller）
+5. Handler 执行完毕后会返回给 HandlerAdapter 一个 ModelAndView 对象（Spring MVC的底层对象，包括 Model 数据模型和 View 视图信息）
+6. HandlerAdapter 接收到 ModelAndView 对象后，将其返回给 DispatcherServlet 
+7. DispatcherServlet 接收到 ModelAndView 对象后，会请求 ViewResolver（视图解析器）对视图进行解析
+8. ViewResolver 根据 View 信息匹配到相应的视图结果，并返回给 DispatcherServlet
+9. DispatcherServlet 接收到具体的 View 视图后，进行视图渲染，将 Model 中的模型数据填充到 View 视图中的 request 域，生成最终的 View（视图）
+10. 视图负责将结果显示到浏览器（客户端）
+
+### 初始化过程
+TODO
+### 调用组件处理request的过程
+TODO
 
 ## spring boot
 
