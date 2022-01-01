@@ -42,7 +42,7 @@
             - [4 持ant风格路径](#4-%E6%8C%81ant%E9%A3%8E%E6%A0%BC%E8%B7%AF%E5%BE%84)
             - [5 支持路径中的占位符](#5-%E6%94%AF%E6%8C%81%E8%B7%AF%E5%BE%84%E4%B8%AD%E7%9A%84%E5%8D%A0%E4%BD%8D%E7%AC%A6)
         - [获取Request里面的parameters](#%E8%8E%B7%E5%8F%96request%E9%87%8C%E9%9D%A2%E7%9A%84parameters)
-                - [1 controller method的argumets](#1-controller-method%E7%9A%84argumets)
+            - [1 controller method的arguments](#1-controller-method%E7%9A%84arguments)
             - [2 @RequestParam 设置形参默认值](#2-requestparam-%E8%AE%BE%E7%BD%AE%E5%BD%A2%E5%8F%82%E9%BB%98%E8%AE%A4%E5%80%BC)
             - [3 @RequestHeader](#3-requestheader)
             - [4 @CookieValue](#4-cookievalue)
@@ -1389,7 +1389,8 @@ public class TestController {
 ```
 
 ### 获取Request里面的parameters
-##### (1) controller method的argumets
+
+#### (1) controller method的arguments
 ```java
 @RequestMapping("/testParam")
 public String testParam(String username, String password, String hobby){ 
