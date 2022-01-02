@@ -76,6 +76,7 @@
         - [初始化过程](#%E5%88%9D%E5%A7%8B%E5%8C%96%E8%BF%87%E7%A8%8B)
         - [调用组件处理request的过程](#%E8%B0%83%E7%94%A8%E7%BB%84%E4%BB%B6%E5%A4%84%E7%90%86request%E7%9A%84%E8%BF%87%E7%A8%8B)
     - [spring boot](#spring-boot)
+        - [helloworld app](#helloworld-app)
     - [spring cloud](#spring-cloud)
 
 <!-- /TOC -->
@@ -1848,5 +1849,85 @@ TODO
 TODO
 
 ## spring boot
+
+[ASM ClassReader failed to parse class file - probably due to a new Java class file version that isn't supported yet](https://zhuanlan.zhihu.com/p/359578389)
+
+### helloworld app
+
+<img src="imgs/7.png" width="30%" />
+
+注意/controller跟MainApplication.java在同一级
+
+- pom.xml
+    ```xml
+    <?xml version="1.0" encoding="UTF-8"?>
+    <project xmlns="http://maven.apache.org/POM/4.0.0"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+        <modelVersion>4.0.0</modelVersion>
+
+        <groupId>com.atguigu</groupId>
+        <artifactId>boot-hello-world-01</artifactId>
+        <version>1.0-SNAPSHOT</version>
+
+        <properties>
+            <maven.compiler.source>16</maven.compiler.source>
+            <maven.compiler.target>16</maven.compiler.target>
+        </properties>
+
+        <parent>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-parent</artifactId>
+            <version>2.3.4.RELEASE</version>
+        </parent>
+
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-web</artifactId>
+            </dependency>
+        </dependencies>
+
+        <!--  简化部署: 把项目打成jar包，直接在目标服务器执行即可。  -->
+        <build>
+            <plugins>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                </plugin>
+            </plugins>
+        </build>
+    </project>
+    ```
+- application.properties
+    ```
+    server.port=8888
+    ```
+- HelloController.java
+    ```java
+    @RestController
+    public class HelloController {
+        @RequestMapping("/hello")
+        public String hello() {
+            return "Hello, Spring Boot 2!";
+        }
+    }
+    ```
+- MainApplication.java
+    ```java
+    /**
+    * 主程序类
+    * @SpringBootApplication：这是一个SpringBoot应用
+    */
+    @SpringBootApplication
+    public class MainApplication {
+
+        public static void main(String[] args) {
+            SpringApplication.run(MainApplication.class, args);
+        }
+    }
+    ```
+
+
 
 ## spring cloud
