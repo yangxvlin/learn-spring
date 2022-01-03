@@ -85,11 +85,16 @@
         - [修改application.properties意味着什么](#%E4%BF%AE%E6%94%B9applicationproperties%E6%84%8F%E5%91%B3%E7%9D%80%E4%BB%80%E4%B9%88)
         - [按需加载](#%E6%8C%89%E9%9C%80%E5%8A%A0%E8%BD%BD)
         - [注解](#%E6%B3%A8%E8%A7%A3)
-            - [组件添加](#%E7%BB%84%E4%BB%B6%E6%B7%BB%E5%8A%A0)
+            - [添加组件到ApplicationContext中](#%E6%B7%BB%E5%8A%A0%E7%BB%84%E4%BB%B6%E5%88%B0applicationcontext%E4%B8%AD)
                 - [1 @Configuration](#1-configuration)
                 - [2 @Bean, @Component、@Controller、@Service、@Repository](#2-bean-componentcontrollerservicerepository)
                 - [3 @Import](#3-import)
                 - [4 @Conditional](#4-conditional)
+            - [原生配置文件引入加载xxx.xml里的Bean @ImportResource](#%E5%8E%9F%E7%94%9F%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E5%BC%95%E5%85%A5%E5%8A%A0%E8%BD%BDxxxxml%E9%87%8C%E7%9A%84bean-importresource)
+            - [配置绑定 加载properties文件中的内容，并且把它封装到JavaBean中](#%E9%85%8D%E7%BD%AE%E7%BB%91%E5%AE%9A-%E5%8A%A0%E8%BD%BDproperties%E6%96%87%E4%BB%B6%E4%B8%AD%E7%9A%84%E5%86%85%E5%AE%B9%E5%B9%B6%E4%B8%94%E6%8A%8A%E5%AE%83%E5%B0%81%E8%A3%85%E5%88%B0javabean%E4%B8%AD)
+                - [1 @ConfigurationProperties](#1-configurationproperties)
+                - [2 @EnableConfigurationProperties + @ConfigurationProperties](#2-enableconfigurationproperties--configurationproperties)
+                - [3 @Component + @ConfigurationProperties](#3-component--configurationproperties)
     - [spring cloud](#spring-cloud)
 
 <!-- /TOC -->
@@ -1989,7 +1994,7 @@ MainApplication.java 所在package及其下面的所有sub package里面的组�
 - SpringBoot所有的自动配置功能都在 spring-boot-autoconfigure 包里面
 
 ### 注解
-#### 组件添加
+#### 添加组件到ApplicationContext中
 ##### (1) @Configuration
 ||||
 |---|---|---|
@@ -2086,5 +2091,39 @@ public class MyConfig {
 可以注释在class/method上, 按照条件再加载Bean
 
 <img src="imgs/8.png" width="40%" />
+
+#### 原生配置文件引入(加载xxx.xml里的Bean) @ImportResource
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
+
+    <bean id="haha" class="com.atguigu.boot.bean.User">
+        <property name="name" value="zhangsan"></property>
+        <property name="age" value="18"></property>
+    </bean>
+
+    <bean id="hehe" class="com.atguigu.boot.bean.Pet">
+        <property name="name" value="tomcat"></property>
+    </bean>
+</beans>
+```
+```java
+@ImportResource("classpath:beans.xml")
+public class MyConfig {
+
+}
+```
+
+#### 配置绑定 (加载properties文件中的内容，并且把它封装到JavaBean中)
+场景例子：我们习惯将经常爱变化的东西写在.properties配置文件中，比如与数据库相关的信息（连接池、URL等）配置到配置文件中，为了方便我们会将配置文件中的内容解析到JavaBean中。这个过程使用java原生代码较为麻烦。
+
+##### (1) @ConfigurationProperties
+
+##### (2) @EnableConfigurationProperties + @ConfigurationProperties
+
+##### (3) @Component + @ConfigurationProperties
 
 ## spring cloud
