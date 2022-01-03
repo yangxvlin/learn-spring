@@ -92,9 +92,8 @@
                 - [4 @Conditional](#4-conditional)
             - [原生配置文件引入加载xxx.xml里的Bean @ImportResource](#%E5%8E%9F%E7%94%9F%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E5%BC%95%E5%85%A5%E5%8A%A0%E8%BD%BDxxxxml%E9%87%8C%E7%9A%84bean-importresource)
             - [配置绑定 加载properties文件中的内容，并且把它封装到JavaBean中](#%E9%85%8D%E7%BD%AE%E7%BB%91%E5%AE%9A-%E5%8A%A0%E8%BD%BDproperties%E6%96%87%E4%BB%B6%E4%B8%AD%E7%9A%84%E5%86%85%E5%AE%B9%E5%B9%B6%E4%B8%94%E6%8A%8A%E5%AE%83%E5%B0%81%E8%A3%85%E5%88%B0javabean%E4%B8%AD)
-                - [1 @ConfigurationProperties](#1-configurationproperties)
+                - [1 @Component + @ConfigurationProperties](#1-component--configurationproperties)
                 - [2 @EnableConfigurationProperties + @ConfigurationProperties](#2-enableconfigurationproperties--configurationproperties)
-                - [3 @Component + @ConfigurationProperties](#3-component--configurationproperties)
     - [spring cloud](#spring-cloud)
 
 <!-- /TOC -->
@@ -2120,10 +2119,54 @@ public class MyConfig {
 #### 配置绑定 (加载properties文件中的内容，并且把它封装到JavaBean中)
 场景例子：我们习惯将经常爱变化的东西写在.properties配置文件中，比如与数据库相关的信息（连接池、URL等）配置到配置文件中，为了方便我们会将配置文件中的内容解析到JavaBean中。这个过程使用java原生代码较为麻烦。
 
-##### (1) @ConfigurationProperties
+application.properties:
+```
+mycar.brand=BYD
+mycar.price=100000
+```
+
+##### (1) @Component + @ConfigurationProperties
+
+```java
+@Component
+@ConfigurationProperties(prefix = "mycar")
+public class Car {
+    private String brand;
+    private Integer price;
+
+    public String getBrand() {
+        return brand;
+    }
+
+    public void setBrand(String brand) {
+        this.brand = brand;
+    }
+
+    public Integer getPrice() {
+        return price;
+    }
+
+    public void setPrice(Integer price) {
+        this.price = price;
+    }
+
+    @Override
+    public String toString() {
+        return "Car{" +
+                "brand='" + brand + '\'' +
+                ", price=" + price +
+                '}';
+    }
+}
+```
 
 ##### (2) @EnableConfigurationProperties + @ConfigurationProperties
-
-##### (3) @Component + @ConfigurationProperties
-
+Car.java在第三方包中的时候, 你就加不了@Component, 只能用这种方法
+```java
+@EnableConfigurationProperties(Car.class)
+// 1、开启Car配置绑定功能
+// 2、把这个Car这个组件自动注册到容器中
+public class MyConfig {
+}
+```
 ## spring cloud
