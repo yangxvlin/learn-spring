@@ -77,6 +77,13 @@
         - [调用组件处理request的过程](#%E8%B0%83%E7%94%A8%E7%BB%84%E4%BB%B6%E5%A4%84%E7%90%86request%E7%9A%84%E8%BF%87%E7%A8%8B)
     - [spring boot](#spring-boot)
         - [helloworld app](#helloworld-app)
+        - [自动配置原理](#%E8%87%AA%E5%8A%A8%E9%85%8D%E7%BD%AE%E5%8E%9F%E7%90%86)
+            - [1 开发导入starter场景启动器](#1-%E5%BC%80%E5%8F%91%E5%AF%BC%E5%85%A5starter%E5%9C%BA%E6%99%AF%E5%90%AF%E5%8A%A8%E5%99%A8)
+            - [2 无需关注版本号，自动版本仲裁](#2-%E6%97%A0%E9%9C%80%E5%85%B3%E6%B3%A8%E7%89%88%E6%9C%AC%E5%8F%B7%E8%87%AA%E5%8A%A8%E7%89%88%E6%9C%AC%E4%BB%B2%E8%A3%81)
+            - [3 可以修改默认版本号](#3-%E5%8F%AF%E4%BB%A5%E4%BF%AE%E6%94%B9%E9%BB%98%E8%AE%A4%E7%89%88%E6%9C%AC%E5%8F%B7)
+        - [如何使用自动配置](#%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8%E8%87%AA%E5%8A%A8%E9%85%8D%E7%BD%AE)
+        - [修改application.properties意味着什么](#%E4%BF%AE%E6%94%B9applicationproperties%E6%84%8F%E5%91%B3%E7%9D%80%E4%BB%80%E4%B9%88)
+        - [按需加载](#%E6%8C%89%E9%9C%80%E5%8A%A0%E8%BD%BD)
     - [spring cloud](#spring-cloud)
 
 <!-- /TOC -->
@@ -1927,6 +1934,53 @@ TODO
         }
     }
     ```
+
+### 自动配置原理
+#### (1) 开发导入starter场景启动器
+1. 见到很多 spring-boot-starter-* ： *就某种场景
+2. 只要引入starter，这个场景的所有常规需要的依赖我们都自动引入
+3. SpringBoot所有支持的场景: https://docs.spring.io/spring-boot/docs/current/reference/html/using-spring-boot.html#using-boot-starter
+4. 见到的  *-spring-boot-starter： 第三方为我们提供的简化开发的场景启动器。
+5. 所有场景启动器最底层的依赖
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter</artifactId>
+    <version>2.3.4.RELEASE</version>
+    <scope>compile</scope>
+</dependency>
+```
+#### (2) 无需关注版本号，自动版本仲裁
+1. 引入依赖默认都可以不写version
+2. 引入非版本仲裁的jar，要写version。
+
+#### (3) 可以修改默认版本号
+1. spring-boot-dependencies里面可以查看当前依赖的版本用的 key。
+2. 在当前项目里面可以重写配置
+```xml
+<properties>
+    <mysql.version>5.1.43</mysql.version>
+</properties>
+```
+
+### 如何使用自动配置
+MainApplication.java 所在package及其下面的所有sub package里面的组件都会被默认扫描进来
+- 想要改变扫描路径，@SpringBootApplication(scanBasePackages="com.atguigu")
+- 或者
+    ```java
+    @SpringBootConfiguration
+    @EnableAutoConfiguration
+    @ComponentScan("com.atguigu.boot")
+    ```
+
+### 修改application.properties意味着什么
+- 默认配置最终都是映射到某个类上，如：MultipartProperties.java
+- 配置文件的值最终会绑定某个类上，这个类会在容器中创建对象
+
+### 按需加载
+- 非常多的starter
+- 引入了哪些场景这个场景的自动配置才会开启
+- SpringBoot所有的自动配置功能都在 spring-boot-autoconfigure 包里面
 
 
 
