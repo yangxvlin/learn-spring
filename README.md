@@ -84,6 +84,9 @@
         - [如何使用自动配置](#%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8%E8%87%AA%E5%8A%A8%E9%85%8D%E7%BD%AE)
         - [修改application.properties意味着什么](#%E4%BF%AE%E6%94%B9applicationproperties%E6%84%8F%E5%91%B3%E7%9D%80%E4%BB%80%E4%B9%88)
         - [按需加载](#%E6%8C%89%E9%9C%80%E5%8A%A0%E8%BD%BD)
+        - [注解](#%E6%B3%A8%E8%A7%A3)
+            - [组件添加](#%E7%BB%84%E4%BB%B6%E6%B7%BB%E5%8A%A0)
+                - [1 @Configuration](#1-configuration)
     - [spring cloud](#spring-cloud)
 
 <!-- /TOC -->
@@ -1979,9 +1982,87 @@ MainApplication.java 所在package及其下面的所有sub package里面的组�
 
 ### 按需加载
 - 非常多的starter
-- 引入了哪些场景这个场景的自动配置才会开启
+- 引入了哪些sprint-boot-starter-xxx这个sprint-boot-starter-xxx的自动配置才会开启
 - SpringBoot所有的自动配置功能都在 spring-boot-autoconfigure 包里面
 
+### 注解
+#### 组件添加
+##### (1) @Configuration
+||||
+|---|---|---|
+|Full模式|配置类组件之间有依赖关系，方法会被调用得到之前单实例组件，用Full模式|保证每个@Bean方法被调用多少次返回的组件都是单实例的
+|Lite模式|配置类组件之间无依赖关系用Lite模式加速容器启动过程，减少判断|每个@Bean方法被调用多少次返回的组件都是新创建的
 
+```java
+/**
+ * 1、配置类里面使用@Bean标注在方法上给容器注册组件，默认也是单实例的
+ * 2、配置类本身也是组件 也可以ApplicationCOntext.getBean("MyConfig") 下面的4.
+ * 3、proxyBeanMethods：代理bean的方法
+ *      Full(proxyBeanMethods = true) 【保证每个@Bean方法被调用多少次返回的组件都是单实例的】
+ *      Lite(proxyBeanMethods = false)【每个@Bean方法被调用多少次返回的组件都是新创建的】
+ *      组件依赖必须使用Full模式默认。其他默认是否Lite模式
+ */
+@Configuration(proxyBeanMethods = false) //告诉SpringBoot这是一个配置类 == 配置文件
+public class MyConfig {
+    /**
+     * Full:外部无论对配置类中的这个组件注册方法调用多少次获取的都是之前注册容器中的单实例对象
+     * @return
+     */
+    @Bean //给容器中添加组件。以方法名作为组件的id来.getBean("user01")。返回类型就是组件类型。返回的值，就是组件在容器中的实例
+    public User user01(){
+        User zhangsan = new User("zhangsan", 18);
+        //user组件依赖了Pet组件
+        zhangsan.setPet(tomcatPet());
+        return zhangsan;
+    }
+
+    // .getBean("tom")
+    @Bean("tom")
+    public Pet tomcatPet(){
+        return new Pet("tomcat");
+    }
+}
+
+```
+
+```java
+@SpringBootConfiguration
+@EnableAutoConfiguration
+@ComponentScan("com.atguigu.boot")
+public class MainApplication {
+    public static void main(String[] args) {
+        //1、返回我们IOC容器
+        ConfigurableApplicationContext run = SpringApplication.run(MainApplication.class, args);
+
+        //2、查看容器里面的组件
+        String[] names = run.getBeanDefinitionNames();
+        for (String name : names) {
+            System.out.println(name);
+        }
+
+        //3、从容器中获取组件
+        Pet tom01 = run.getBean("tom", Pet.class);
+        Pet tom02 = run.getBean("tom", Pet.class);
+        System.out.println("组件："+(tom01 == tom02));
+
+
+        //4、com.atguigu.boot.config.MyConfig$$EnhancerBySpringCGLIB$$51f1e1ca@1654a892
+        MyConfig bean = run.getBean(MyConfig.class);
+        System.out.println(bean);
+
+        //如果@Configuration(proxyBeanMethods = true)代理对象调用方法。SpringBoot总会检查这个组件是否在容器中有。
+        //保持组件单实例
+        User user = bean.user01();
+        User user1 = bean.user01();
+        System.out.println(user == user1);
+
+        // 如果proxyBeanMethods = true, 每次pet都是single instance
+        User user01 = run.getBean("user01", User.class);
+        Pet tom = run.getBean("tom", Pet.class);
+
+        System.out.println("用户的宠物："+(user01.getPet() == tom));
+    }
+}
+```
 
 ## spring cloud
