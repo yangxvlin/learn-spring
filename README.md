@@ -87,6 +87,9 @@
         - [注解](#%E6%B3%A8%E8%A7%A3)
             - [组件添加](#%E7%BB%84%E4%BB%B6%E6%B7%BB%E5%8A%A0)
                 - [1 @Configuration](#1-configuration)
+                - [2 @Bean, @Component、@Controller、@Service、@Repository](#2-bean-componentcontrollerservicerepository)
+                - [3 @Import](#3-import)
+                - [4 @Conditional](#4-conditional)
     - [spring cloud](#spring-cloud)
 
 <!-- /TOC -->
@@ -2064,5 +2067,24 @@ public class MainApplication {
     }
 }
 ```
+
+##### (2) @Bean, @Component、@Controller、@Service、@Repository
+看上面, 看之前的spring系列
+
+##### (3) @Import
+
+```java
+@Import({User.class, DBHelper.class})
+@Configuration(proxyBeanMethods = false) //告诉SpringBoot这是一个配置类 == 配置文件
+public class MyConfig {
+}
+```
+- @Import: 自动从类中的无参构造函数创建一个实例注册到 IOC 容器中
+- 【注意】@Import所创建的实例在 IOC 容器中默认的id名为类的全路径名，如 User 类就是：com.atguigu.bean.User
+
+##### (4) @Conditional
+可以注释在class/method上, 按照条件再加载Bean
+
+<img src="imgs/8.png" width="40%" />
 
 ## spring cloud
