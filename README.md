@@ -82,6 +82,9 @@
             - [2 无需关注版本号，自动版本仲裁](#2-%E6%97%A0%E9%9C%80%E5%85%B3%E6%B3%A8%E7%89%88%E6%9C%AC%E5%8F%B7%E8%87%AA%E5%8A%A8%E7%89%88%E6%9C%AC%E4%BB%B2%E8%A3%81)
             - [3 可以修改默认版本号](#3-%E5%8F%AF%E4%BB%A5%E4%BF%AE%E6%94%B9%E9%BB%98%E8%AE%A4%E7%89%88%E6%9C%AC%E5%8F%B7)
         - [如何使用自动配置](#%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8%E8%87%AA%E5%8A%A8%E9%85%8D%E7%BD%AE)
+        - [按需开启自动配置项](#%E6%8C%89%E9%9C%80%E5%BC%80%E5%90%AF%E8%87%AA%E5%8A%A8%E9%85%8D%E7%BD%AE%E9%A1%B9)
+            - [修改默认配置](#%E4%BF%AE%E6%94%B9%E9%BB%98%E8%AE%A4%E9%85%8D%E7%BD%AE)
+            - [自动配置流程](#%E8%87%AA%E5%8A%A8%E9%85%8D%E7%BD%AE%E6%B5%81%E7%A8%8B)
         - [修改application.properties意味着什么](#%E4%BF%AE%E6%94%B9applicationproperties%E6%84%8F%E5%91%B3%E7%9D%80%E4%BB%80%E4%B9%88)
         - [按需加载](#%E6%8C%89%E9%9C%80%E5%8A%A0%E8%BD%BD)
         - [注解](#%E6%B3%A8%E8%A7%A3)
@@ -1975,13 +1978,64 @@ TODO
 
 ### 如何使用自动配置
 MainApplication.java 所在package及其下面的所有sub package里面的组件都会被默认扫描进来
-- 想要改变扫描路径，@SpringBootApplication(scanBasePackages="com.atguigu")
-- 或者
+- 想要改变扫描路径，```@SpringBootApplication(scanBasePackages="com.atguigu")```
+- 等同于
     ```java
     @SpringBootConfiguration
     @EnableAutoConfiguration
     @ComponentScan("com.atguigu.boot")
     ```
+    - @SpringBootConfiguration只是Spring的标准@Configuration批注的替代方法。 两者之间的唯一区别是@SpringBootConfiguration允许自动找到配置
+    - @ComponentScan("com.atguigu.boot")
+    - @EnableAutoConfiguration: 本质上是两个注解
+        ```java
+        @AutoConfigurationPackage
+        @Import(AutoConfigurationImportSelector.class)
+        public @interface EnableAutoConfiguration {
+        }
+        ```
+        - @AutoConfigurationPackage
+            ```java
+            @Import(AutoConfigurationPackages.Registrar.class)  //给容器中导入一个组件
+            public @interface AutoConfigurationPackage {}
+
+            //使用@import将AutoConfigurationPackages包下的Registrar类作为组件导入到容器中，然后使用Registrar中的方法批量完成组件的注册。
+            ```
+        - @Import(AutoConfigurationImportSelector.class)
+            1. 利用getAutoConfigurationEntry(annotationMetadata);给容器中批量导入一些组件
+            2. 调用```List<String> configurations = getCandidateConfigurations(annotationMetadata, attributes)```获取到所有需要导入到容器中的配置类
+            3. 利用工厂加载 ```Map<String, List<String>> loadSpringFactories(@Nullable ClassLoader classLoader)```；得到所有的组件
+            4. 从META-INF/spring.factories位置来加载一个文件。  
+                默认扫描我们当前系统里面所有META-INF/spring.factories位置的文件 (例如:) spring-boot-autoconfigure-2.3.4.RELEASE.jar包里面也有META-INF/spring.factories
+                - 这个文件里面写死了spring-boot一启动就要给容器中加载的所有配置类
+
+### 按需开启自动配置项
+上面说了spring boot默认加载的都写死的, 用户新定义了自己的, 就不会加载默认的
+#### 修改默认配置
+约定大于配置: SpringBoot默认会在底层配好所有的组件。但是如果用户自己配置了以用户的优先
+```java
+@Bean
+@ConditionalOnBean(MultipartResolver.class)  //容器中有这个类型组件
+@ConditionalOnMissingBean(name = DispatcherServlet.MULTIPART_RESOLVER_BEAN_NAME) //容器中没有这个名字 multipartResolver 的组件
+public MultipartResolver multipartResolver(MultipartResolver resolver) {
+    //给@Bean标注的方法传入了对象参数，这个参数的值就会从容器中找。
+    //SpringMVC multipartResolver。防止有些用户配置的文件上传解析器不符合规范
+    // Detect if the user has created a MultipartResolver but named it incorrectly
+    return resolver;
+}
+// 给容器中加入了文件上传解析器；
+```
+#### 自动配置流程
+- SpringBoot先加载所有的自动配置类  xxxxxAutoConfiguration.java
+- 每个自动配置类按照条件进行生效，默认都会绑定配置文件指定的值。xxxxProperties里面拿。xxxProperties和配置文件进行了绑定 
+    - **(xxxProperties这个java文件里的值 就是我们会在application.properties里自定义的值)**
+- 生效的配置类就会给容器中装配很多组件
+- 只要容器中有这些组件，相当于这些功能就有了
+- 定制化配置
+  - 用户直接自己@Bean替换底层的组件
+  - 用户去看这个组件是获取的配置文件什么值就去修改。(通过修改application.properties配置文件中的所需key对应的value进行自定义配置)
+
+xxxxxAutoConfiguration ---> 组件  ---> xxxxProperties里面拿值  ----> application.properties
 
 ### 修改application.properties意味着什么
 - 默认配置最终都是映射到某个类上，如：MultipartProperties.java
@@ -2169,4 +2223,8 @@ Car.java在第三方包中的时候, 你就加不了@Component, 只能用这种�
 public class MyConfig {
 }
 ```
+
+
+
+
 ## spring cloud
